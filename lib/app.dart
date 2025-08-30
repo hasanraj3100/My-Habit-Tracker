@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/habits/presentation/screens/habit_list_screen.dart';
+import 'features/auth/presentation/screens/splash_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -21,20 +24,39 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class SplashScreenWrapper extends StatelessWidget {
+class SplashScreenWrapper extends StatefulWidget {
   const SplashScreenWrapper({super.key});
 
   @override
+  State<SplashScreenWrapper> createState() => _SplashScreenWrapperState();
+}
+
+class _SplashScreenWrapperState extends State<SplashScreenWrapper> {
+  bool _showSplash = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Keep splash for at least 2 seconds
+    Timer(const Duration(seconds: 2), () {
+      if (mounted) {
+        setState(() => _showSplash = false);
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, auth, _) {
-        // While Firebase is still initializing, show splash
-        if (auth.user == null) {
-          return const LoginScreen();
-        } else {
-          return const HabitListScreen();
-        }
-      },
-    );
+    final auth = Provider.of<AuthProvider>(context);
+
+    if (_showSplash) {
+      return const SplashScreen();
+    }
+
+    if (auth.user == null) {
+      return const LoginScreen();
+    } else {
+      return const HabitListScreen();
+    }
   }
 }

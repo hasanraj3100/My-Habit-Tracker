@@ -5,12 +5,15 @@ import '../../data/auth_repository.dart';
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _repository = AuthRepository();
   User? _user;
+  bool _isLoading = true;
 
   User? get user => _user;
+  bool get isLoading => _isLoading;
 
   AuthProvider() {
     _repository.authStateChanges.listen((user) {
       _user = user;
+      _isLoading = false; // done checking
       notifyListeners();
     });
   }
