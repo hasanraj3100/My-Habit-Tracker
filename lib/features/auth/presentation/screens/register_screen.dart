@@ -28,8 +28,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                await authProvider.signUp(emailController.text, passwordController.text);
-                Navigator.pop(context); // go back to login
+                try {
+                  await authProvider.signUp(
+                    emailController.text.trim(),
+                    passwordController.text.trim(),
+                  );
+
+                  // If the widget is still mounted, pop this screen
+                  if (mounted) {
+                    Navigator.of(context).pop(); // go back to SplashScreenWrapper
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Registration failed: $e")),
+                  );
+                }
               },
               child: const Text("Register"),
             ),

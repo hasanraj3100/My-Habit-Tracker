@@ -29,7 +29,10 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () async {
-                await authProvider.signIn(emailController.text, passwordController.text);
+                await authProvider.signIn(
+                  emailController.text.trim(),
+                  passwordController.text.trim(),
+                );
               },
               child: const Text("Login"),
             ),

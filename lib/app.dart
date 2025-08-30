@@ -13,18 +13,28 @@ class MyApp extends StatelessWidget {
       create: (_) => AuthProvider(),
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Habit Tracker',
+        title: 'My Habit Tracker',
         theme: ThemeData(primarySwatch: Colors.blue),
-        home: Consumer<AuthProvider>(
-          builder: (context, auth, _) {
-            if (auth.user == null) {
-              return const LoginScreen();
-            } else {
-              return const HabitListScreen(); // your main app after login
-            }
-          },
-        ),
+        home: const SplashScreenWrapper(),
       ),
+    );
+  }
+}
+
+class SplashScreenWrapper extends StatelessWidget {
+  const SplashScreenWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AuthProvider>(
+      builder: (context, auth, _) {
+        // While Firebase is still initializing, show splash
+        if (auth.user == null) {
+          return const LoginScreen();
+        } else {
+          return const HabitListScreen();
+        }
+      },
     );
   }
 }
