@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../services/local_storage_service.dart';
 import '../../data/auth_repository.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -26,7 +27,9 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _repository.signUp(email, password);
       _user = FirebaseAuth.instance.currentUser;
-      notifyListeners();
+      if (_user != null) {
+        await LocalStorageService.saveUserId(_user!.uid);
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -50,6 +53,8 @@ class AuthProvider extends ChangeNotifier {
   Future<void> signOut() async {
     await _repository.signOut();
     _user = null;
+    await LocalStorageService.removeUserId();
+    await LocalStorageService.removeUserData();
     notifyListeners();
   }
 
@@ -72,6 +77,24 @@ class AuthProvider extends ChangeNotifier {
       'email': _user!.email,
       'created_at': FieldValue.serverTimestamp(),
     });
+
+    // Save locally for faster profile load
+    await LocalStorageService.saveUserData({
+      'nickname': nickname,
+      'gender': gender,
+      'timezone': timezone,
+      'date_of_birth': dateOfBirth.toIso8601String(),
+      'email': _user!.email,
+    });
+  }
+
+  // Set current user from stored userId
+  Future<void> setUserById(String userId) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && user.uid == userId) {
+      _user = user;
+      notifyListeners();
+    }
   }
 }
 

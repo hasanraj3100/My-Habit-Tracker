@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:my_habit_tracker/services/local_storage_service.dart';
 import 'package:provider/provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
@@ -34,16 +35,19 @@ class SplashScreenWrapper extends StatefulWidget {
 class _SplashScreenWrapperState extends State<SplashScreenWrapper> {
   bool _showSplash = true;
 
-  @override
+    @override
   void initState() {
     super.initState();
-    // Keep splash for at least 2 seconds
-    Timer(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() => _showSplash = false);
+    Timer(const Duration(seconds: 2), () async {
+      final storedUserId = await LocalStorageService.getUserId();
+      if (storedUserId != null) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        authProvider.setUserById(storedUserId); // we need to add this method
       }
+      if (mounted) setState(() => _showSplash = false);
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
