@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // 🌿 Primary brand colors
-  static const Color primary = Color(0xFF4CAF93); // Green-Teal
-  static const Color secondary = Color(0xFF7DD3FC); // Sky Blue
+  // Brand
+  static const primary = Color(0xFF4CAF93); // Green–Teal
+  static const secondary = Color(0xFF7DD3FC); // Sky Blue
 
-  // 🖼 Backgrounds & surfaces
-  static const Color background = Color(0xFFF9FAFB); // Light Grey-White
-  static const Color surface = Color(0xFFFFFFFF); // Pure White
+  // Surfaces
+  static const background = Color(0xFFF9FAFB); // App bg
+  static const surface = Color(0xFFFFFFFF);    // Cards / sheets
+  static const surfaceMuted = Color(0xFFF3F4F6); // Soft card bg (e.g., habit cards)
 
-  // 📝 Text colors
-  static const Color textPrimary = Color(0xFF111827); // Dark Slate
-  static const Color textSecondary = Color(0xFF6B7280); // Muted Grey
+  // Text
+  static const textPrimary = Color(0xFF111827);
+  static const textSecondary = Color(0xFF6B7280);
 
-  // ✅ States
-  static const Color success = Color(0xFF22C55E); // Fresh Green
-  static const Color error = Color(0xFFEF4444); // Warm Red
+  // States
+  static const success = Color(0xFF22C55E);
+  static const error = Color(0xFFEF4444);
 
-  // 🌙 Dark Mode
-  static const Color darkBackground = Color(0xFF0F172A);
-  static const Color darkSurface = Color(0xFF1E293B);
-  static const Color darkTextPrimary = Color(0xFFF1F5F9);
-  static const Color darkTextSecondary = Color(0xFF94A3B8);
+  // Dark (if you wire up theming later)
+  static const darkBackground = Color(0xFF0F172A);
+  static const darkSurface = Color(0xFF1E293B);
+  static const darkTextPrimary = Color(0xFFF1F5F9);
+  static const darkTextSecondary = Color(0xFF94A3B8);
 }
