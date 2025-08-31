@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/constants/app_colors.dart';
+import 'habit_create_screen.dart';
+import '../../../profile/presentation/screens/profile_screen.dart';
 
 class HabitListScreen extends StatefulWidget {
   const HabitListScreen({super.key});
@@ -9,38 +13,56 @@ class HabitListScreen extends StatefulWidget {
 }
 
 class _HabitListScreenState extends State<HabitListScreen> {
-  // Static demo data
-  final List<Map<String, dynamic>> _habits = [
-    {
-      "title": "Walk 3 KM",
-      "category": "Fitness",
-      "frequency": "Daily",
-      "streak": 23,
-      "done": true,
-    },
-    {
-      "title": "Drink 8 glass of water",
-      "category": "Health",
-      "frequency": "Daily",
-      "streak": 15,
-      "done": false,
-    },
-    {
-      "title": "Study Math",
-      "category": "Study",
-      "frequency": "Weekly",
-      "streak": 3,
-      "done": false,
-    },
-  ];
-
   final List<String> _categories = ["Study", "Health", "Work", "Personal", "+ Add Category"];
+  int _navIndex = 0;
 
-  void _toggleDone(int i) {
-    setState(() => _habits[i]["done"] = !_habits[i]["done"]);
+  // Stream of habit documents for current user
+  Stream<QuerySnapshot<Map<String, dynamic>>> _habitsStream() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // empty stream if not logged in
+      return const Stream.empty() as Stream<QuerySnapshot<Map<String, dynamic>>>;
+    }
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('habits')
+        .orderBy('createdAt', descending: true)
+        .snapshots();
   }
 
-  int _navIndex = 0;
+  Future<void> _toggleHabit(DocumentReference docRef, bool currentStatus) async {
+    try {
+      await docRef.update({'isDone': !currentStatus});
+    } catch (e) {
+      // Optionally show an error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not update habit: $e')),
+      );
+    }
+  }
+
+  Widget _navItem({required IconData icon, required int index}) {
+    final selected = _navIndex == index;
+    return IconButton(
+      onPressed: () {
+        // profile (index 4) should navigate to ProfileScreen
+        if (index == 4) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const ProfileScreen()),
+          );
+          return;
+        }
+        setState(() => _navIndex = index);
+      },
+      icon: Icon(
+        icon,
+        color: selected ? AppColors.secondary : Colors.white.withOpacity(.85),
+        size: selected ? 28 : 24,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +76,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
             // ===== Header + Quote (ONLY this has the background image) =====
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 20 + 24, 16, 24), // safe-ish top
+              padding: const EdgeInsets.fromLTRB(16, 20 + 24, 16, 24),
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(28),
@@ -147,7 +169,11 @@ class _HabitListScreenState extends State<HabitListScreen> {
                   return ChoiceChip(
                     label: Text(_categories[i]),
                     selected: false,
-                    onSelected: (_) {},
+                    onSelected: (_) {
+                      if (isAdd) {
+                        // TODO: Add category action (dialog)
+                      }
+                    },
                     labelStyle: TextStyle(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w600,
@@ -155,7 +181,9 @@ class _HabitListScreenState extends State<HabitListScreen> {
                     backgroundColor: isAdd ? Colors.white : AppColors.surface,
                     shape: StadiumBorder(
                       side: BorderSide(
-                        color: isAdd ? AppColors.textSecondary.withOpacity(.35) : AppColors.primary.withOpacity(.35),
+                        color: isAdd
+                            ? AppColors.textSecondary.withOpacity(.35)
+                            : AppColors.primary.withOpacity(.35),
                         width: 1.2,
                       ),
                     ),
@@ -183,21 +211,52 @@ class _HabitListScreenState extends State<HabitListScreen> {
             ),
             const SizedBox(height: 12),
 
-            // habit cards
+            // habit cards area - StreamBuilder to load from Firestore
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: List.generate(_habits.length, (i) {
-                  final h = _habits[i];
-                  return _HabitCard(
-                    title: h["title"],
-                    category: h["category"],
-                    frequency: h["frequency"],
-                    streak: h["streak"],
-                    done: h["done"],
-                    onToggle: () => _toggleDone(i),
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: _habitsStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          "No habits yet. Add one!",
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final docs = snapshot.data!.docs;
+                  return Column(
+                    children: docs.map((doc) {
+                      final data = doc.data();
+                      final title = data['title'] ?? 'Untitled';
+                      final category = data['category'] ?? '';
+                      final frequency = data['frequency'] ?? '';
+                      final streak = (data['streak'] is int) ? data['streak'] as int : (data['streak'] is num ? (data['streak'] as num).toInt() : 0);
+                      final done = data['isDone'] == true;
+
+                      return _HabitCard(
+                        title: title,
+                        category: category,
+                        frequency: frequency,
+                        streak: streak,
+                        done: done,
+                        onToggle: () => _toggleHabit(doc.reference, done),
+                      );
+                    }).toList(),
                   );
-                }),
+                },
               ),
             ),
 
@@ -213,7 +272,12 @@ class _HabitListScreenState extends State<HabitListScreen> {
         width: 68,
         child: FloatingActionButton(
           heroTag: 'fab_add_habit',
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const HabitCreateScreen()),
+            );
+          },
           backgroundColor: AppColors.primary,
           elevation: 8,
           child: const Icon(Icons.add, size: 34, color: Colors.white),
@@ -246,15 +310,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _navItem({required IconData icon, required int index}) {
-    final selected = _navIndex == index;
-    return IconButton(
-      onPressed: () => setState(() => _navIndex = index),
-      icon: Icon(icon,
-          color: selected ? AppColors.secondary : Colors.white.withOpacity(.85), size: selected ? 28 : 24),
     );
   }
 }
