@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'package:provider/provider.dart';
-
 import '../../data/models/favourite_quote_model.dart';
 import '../providers/favourite_quote_provider.dart';
 
@@ -19,23 +19,28 @@ class FavouriteQuotesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<FavouriteQuotesProvider>(context, listen: false);
+    final colors = context.colors;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Favourite Quotes"),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: colors.primary,
       ),
+      backgroundColor: colors.background,
       body: StreamBuilder<List<FavouriteQuoteModel>>(
         stream: provider.favourites,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(color: colors.primary),
+            );
           }
+
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
+            return Center(
               child: Text(
                 "No favourite quotes yet.",
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(fontSize: 16, color: colors.textSecondary),
               ),
             );
           }
@@ -50,11 +55,13 @@ class FavouriteQuotesPage extends StatelessWidget {
               return Container(
                 margin: const EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: colors.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(0.4)
+                          : Colors.black.withOpacity(0.1),
                       blurRadius: 6,
                       offset: const Offset(0, 3),
                     ),
@@ -67,9 +74,10 @@ class FavouriteQuotesPage extends StatelessWidget {
                   ),
                   title: Text(
                     fav.text,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
+                      color: colors.textPrimary,
                     ),
                   ),
                   subtitle: Padding(
@@ -78,7 +86,7 @@ class FavouriteQuotesPage extends StatelessWidget {
                       "- ${fav.author}",
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[700],
+                        color: colors.textSecondary,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -87,12 +95,12 @@ class FavouriteQuotesPage extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.copy, color: Colors.blueAccent),
+                        icon: Icon(Icons.copy, color: colors.secondary),
                         tooltip: "Copy quote",
                         onPressed: () => copyQuote(fav, context),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.redAccent),
+                        icon: Icon(Icons.delete, color: colors.error),
                         tooltip: "Remove from favourites",
                         onPressed: () {
                           provider.removeFavourite(fav.id);
@@ -106,7 +114,6 @@ class FavouriteQuotesPage extends StatelessWidget {
           );
         },
       ),
-      backgroundColor: Colors.grey[100],
     );
   }
 }
