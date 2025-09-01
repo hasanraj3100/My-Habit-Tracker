@@ -15,89 +15,29 @@ class HabitListScreen extends StatefulWidget {
 }
 
 class _HabitListScreenState extends State<HabitListScreen> {
-  List<String> _categories = [];
   int _navIndex = 0;
   bool _sortFinishedBottom = false;
-  String? _selectedCategory; // for filtering
-  final user = FirebaseAuth.instance.currentUser;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadCategories();
-  }
+  String _selectedCategoryFilter = "";
 
   String _todayKey() => DateFormat("yyyy-MM-dd").format(DateTime.now());
 
   int _todayWeekday() => DateTime.now().weekday;
 
-  Future<void> _loadCategories() async {
-    if (user == null) return;
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .collection('settings')
-        .doc('preferences')
-        .get();
-
-    final categories = List<String>.from(doc.data()?['categories'] ?? []);
-    setState(() {
-      _categories = [...categories, "+ Add Category"];
-    });
-  }
-
-  Future<void> _addCategory() async {
-    final controller = TextEditingController();
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("Add Category"),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(hintText: "Category name"),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("Cancel")),
-          ElevatedButton(
-              onPressed: () {
-                final newCat = controller.text.trim();
-                if (newCat.isNotEmpty) Navigator.pop(ctx, newCat);
-              },
-              child: const Text("Add")),
-        ],
-      ),
-    );
-
-    if (result != null && result.isNotEmpty) {
-      final prefRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(user!.uid)
-          .collection('settings')
-          .doc('preferences');
-
-      // update categories in Firestore
-      final currentDoc = await prefRef.get();
-      final currentCategories =
-      List<String>.from(currentDoc.data()?['categories'] ?? []);
-      currentCategories.add(result);
-      await prefRef.set({'categories': currentCategories});
-
-      setState(() {
-        _categories.insert(_categories.length - 1, result);
-      });
-    }
-  }
-
   Stream<QuerySnapshot<Map<String, dynamic>>> _habitsStream() {
+    final user = FirebaseAuth.instance.currentUser;
     if (user == null) return const Stream.empty() as Stream<QuerySnapshot<Map<String, dynamic>>>;
     return FirebaseFirestore.instance
         .collection('users')
-        .doc(user!.uid)
+        .doc(user.uid)
         .collection('habits')
         .orderBy('createdAt', descending: true)
         .snapshots();
+  }
+
+  bool _isDoneToday(Map<String, dynamic> data) {
+    final history = List<String>.from(data['history'] ?? []);
+    return history.contains(_todayKey());
   }
 
   Future<void> _toggleHabit(DocumentReference docRef, Map<String, dynamic> data) async {
@@ -112,37 +52,25 @@ class _HabitListScreenState extends State<HabitListScreen> {
 
     final streak = _calculateStreak(history, data['frequency'], data['weekdays'] ?? []);
 
-    await docRef.update({
-      'history': history,
-      'streak': streak,
-    });
-  }
-
-  bool _isDoneToday(Map<String, dynamic> data) {
-    final history = List<String>.from(data['history'] ?? []);
-    return history.contains(_todayKey());
+    await docRef.update({'history': history, 'streak': streak});
   }
 
   int _calculateStreak(List<String> history, String frequency, List<dynamic> weekdays) {
     if (history.isEmpty) return 0;
-
     history.sort((a, b) => b.compareTo(a));
     final parsed = history.map((d) => DateTime.parse(d)).toList();
-
     int streak = 0;
     DateTime today = DateTime.now();
 
-    if (frequency.toLowerCase() == "daily") {
+    if (frequency == "Daily") {
       DateTime check = today;
       for (var date in parsed) {
         if (date.year == check.year && date.month == check.month && date.day == check.day) {
           streak++;
           check = check.subtract(const Duration(days: 1));
-        } else {
-          break;
-        }
+        } else break;
       }
-    } else if (frequency.toLowerCase() == "weekly") {
+    } else if (frequency == "Weekly") {
       DateTime check = today;
       while (true) {
         if (weekdays.contains(check.weekday)) {
@@ -151,9 +79,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
           if (matched) {
             streak++;
             check = check.subtract(const Duration(days: 7));
-          } else {
-            break;
-          }
+          } else break;
         } else {
           check = check.subtract(const Duration(days: 1));
           if (check.isBefore(parsed.last)) break;
@@ -174,16 +100,62 @@ class _HabitListScreenState extends State<HabitListScreen> {
         }
         setState(() => _navIndex = index);
       },
-      icon: Icon(
-        icon,
-        color: selected ? AppColors.secondary : Colors.white.withOpacity(.85),
-        size: selected ? 28 : 24,
+      icon: Icon(icon,
+          color: selected ? AppColors.secondary : Colors.white.withOpacity(.85),
+          size: selected ? 28 : 24),
+    );
+  }
+
+  Future<void> _showAddCategoryDialog() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final TextEditingController categoryController = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Add New Category"),
+        content: TextField(
+          controller: categoryController,
+          decoration: const InputDecoration(hintText: "Enter category name"),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          TextButton(
+              onPressed: () {
+                final newCat = categoryController.text.trim();
+                if (newCat.isNotEmpty) Navigator.pop(ctx, newCat);
+              },
+              child: const Text("Add")),
+        ],
       ),
     );
+
+    if (result != null && result.isNotEmpty) {
+      final prefRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('settings')
+          .doc('preferences');
+
+      final currentDoc = await prefRef.get();
+      final currentCategories = List<String>.from(currentDoc.data()?['categories'] ?? []);
+      if (!currentCategories.contains(result)) {
+        currentCategories.add(result);
+        await prefRef.set({'categories': currentCategories});
+      }
+
+      setState(() {
+        _selectedCategoryFilter = result;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final todayWeekday = _todayWeekday();
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SingleChildScrollView(
@@ -191,15 +163,13 @@ class _HabitListScreenState extends State<HabitListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ===== Header + Quote =====
+            // ===== Header =====
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(16, 44, 16, 24),
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(28),
-                  bottomRight: Radius.circular(28),
-                ),
+                    bottomLeft: Radius.circular(28), bottomRight: Radius.circular(28)),
                 image: const DecorationImage(
                   image: AssetImage("assets/images/header_bg.jpg"),
                   fit: BoxFit.cover,
@@ -268,53 +238,70 @@ class _HabitListScreenState extends State<HabitListScreen> {
                       fontWeight: FontWeight.w700)),
             ),
             const SizedBox(height: 10),
-            SizedBox(
-              height: 44,
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                scrollDirection: Axis.horizontal,
-                itemBuilder: (context, i) {
-                  final isAdd = _categories[i].startsWith('+');
-                  final category = _categories[i];
-                  final isSelected = _selectedCategory == category;
 
-                  return ChoiceChip(
-                    label: Text(category),
-                    selected: isSelected,
-                    onSelected: (_) {
-                      if (isAdd) {
-                        _addCategory();
-                      } else {
-                        setState(() {
-                          if (_selectedCategory == category) {
-                            _selectedCategory = null;
-                          } else {
-                            _selectedCategory = category;
-                          }
-                        });
-                      }
+            StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+              stream: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(FirebaseAuth.instance.currentUser!.uid)
+                  .collection('settings')
+                  .doc('preferences')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const SizedBox(
+                      height: 44, child: Center(child: CircularProgressIndicator()));
+                }
+
+                final data = snapshot.data!.data();
+                final categories = List<String>.from(data?['categories'] ?? []);
+                final chips = [...categories, '+ Add Category'];
+
+                return SizedBox(
+                  height: 44,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: chips.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                    itemBuilder: (context, i) {
+                      final cat = chips[i];
+                      final isAdd = cat.startsWith('+');
+                      final selected = _selectedCategoryFilter == cat;
+
+                      return ChoiceChip(
+                        label: Text(cat),
+                        selected: selected,
+                          onSelected: (_) {
+                            if (isAdd) {
+                              _showAddCategoryDialog();
+                            } else {
+                              setState(() {
+                                if (_selectedCategoryFilter == cat) {
+                                  _selectedCategoryFilter = ""; // unselect if already selected
+                                } else {
+                                  _selectedCategoryFilter = cat;
+                                }
+                              });
+                            }
+                          },
+
+                        labelStyle: TextStyle(
+                            color: selected ? Colors.white : AppColors.textPrimary,
+                            fontWeight: FontWeight.w600),
+                        backgroundColor: isAdd ? Colors.white : AppColors.surface,
+                        selectedColor: AppColors.primary,
+                        shape: StadiumBorder(
+                          side: BorderSide(
+                              color: isAdd
+                                  ? AppColors.textSecondary.withOpacity(.35)
+                                  : AppColors.primary.withOpacity(.35),
+                              width: 1.2),
+                        ),
+                      );
                     },
-                    labelStyle: TextStyle(
-                        color: isAdd
-                            ? AppColors.textPrimary
-                            : (isSelected ? Colors.white : AppColors.textPrimary),
-                        fontWeight: FontWeight.w600),
-                    backgroundColor:
-                    isAdd ? Colors.white : AppColors.surface,
-                    selectedColor: AppColors.primary,
-                    shape: StadiumBorder(
-                      side: BorderSide(
-                        color: isAdd
-                            ? AppColors.textSecondary.withOpacity(.35)
-                            : AppColors.primary.withOpacity(.35),
-                        width: 1.2,
-                      ),
-                    ),
-                  );
-                },
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemCount: _categories.length,
-              ),
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 24),
@@ -342,7 +329,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
             ),
             const SizedBox(height: 12),
 
-            // habits list
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -363,14 +349,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
 
                   var docs = snapshot.data!.docs;
 
-                  // filter by selected category
-                  if (_selectedCategory != null) {
-                    docs = docs
-                        .where((doc) =>
-                    doc.data()['category'] == _selectedCategory)
-                        .toList();
-                  }
-
                   if (_sortFinishedBottom) {
                     docs.sort((a, b) {
                       final aDone = _isDoneToday(a.data());
@@ -380,14 +358,19 @@ class _HabitListScreenState extends State<HabitListScreen> {
                     });
                   }
 
-                  final todayWeekday = _todayWeekday();
                   return Column(
                     children: docs.where((doc) {
                       final data = doc.data();
                       final frequency = data['frequency'] ?? '';
                       final weekdays = List<int>.from(data['weekdays'] ?? []);
-                      return frequency.toLowerCase() == 'daily' ||
-                          (frequency.toLowerCase() == 'weekly' && weekdays.contains(todayWeekday));
+                      final category = data['category'] ?? '';
+
+                      final matchesFrequency =
+                          frequency == 'Daily' || (frequency == 'Weekly' && weekdays.contains(todayWeekday));
+                      final matchesCategory =
+                          _selectedCategoryFilter.isEmpty || category == _selectedCategoryFilter;
+
+                      return matchesFrequency && matchesCategory;
                     }).map((doc) {
                       final data = doc.data();
                       final done = _isDoneToday(data);
@@ -397,8 +380,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  HabitDetailsScreen(habitId: doc.id),
+                              builder: (_) => HabitDetailsScreen(habitId: doc.id),
                             ),
                           );
                         },
@@ -429,8 +411,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
         width: 68,
         child: FloatingActionButton(
           heroTag: 'fab_add_habit',
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            await Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const HabitCreateScreen()),
             );
@@ -525,7 +507,6 @@ class _HabitCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -553,7 +534,7 @@ class _HabitCard extends StatelessWidget {
                     border: Border.all(color: AppColors.textSecondary.withOpacity(.25)),
                   ),
                   child: Text(
-                    frequency.toLowerCase() == "weekly"
+                    frequency == "Weekly"
                         ? "Weekly (${_weekdayLabel(weekdays)})"
                         : frequency,
                     style: const TextStyle(
@@ -565,20 +546,15 @@ class _HabitCard extends StatelessWidget {
               ],
             ),
           ),
-
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text("$streak",
                   style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: AppColors.textPrimary)),
+                      fontSize: 26, fontWeight: FontWeight.w900, color: AppColors.textPrimary)),
               const Text("Streak",
                   style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12)),
+                      color: AppColors.textSecondary, fontWeight: FontWeight.w600, fontSize: 12)),
             ],
           ),
         ],
