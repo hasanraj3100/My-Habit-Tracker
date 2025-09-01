@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart'; // ✅ for Clipboard
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/habit_model.dart';
 import '../providers/habit_provider.dart';
+import '../widgets/quote_section.dart';
 import 'habit_create_screen.dart';
 import 'habit_details_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
@@ -21,7 +23,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
   String _selectedCategoryFilter = "";
 
   String _todayKey() => DateFormat("yyyy-MM-dd").format(DateTime.now());
-
   int _todayWeekday() => DateTime.now().weekday;
 
   @override
@@ -32,6 +33,12 @@ class _HabitListScreenState extends State<HabitListScreen> {
     });
   }
 
+  // ---------------- QUOTE SECTION ----------------
+  Widget _quoteSection() {
+    return const QuoteSection();
+  }
+
+  // ---------------- ADD CATEGORY ----------------
   Future<void> _showAddCategoryDialog() async {
     final TextEditingController categoryController = TextEditingController();
     final result = await showDialog<String>(
@@ -150,22 +157,13 @@ class _HabitListScreenState extends State<HabitListScreen> {
                           ],
                         ),
                         const SizedBox(height: 28),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            "We are what we repeatedly do.\nExcellence, then, is not an act,\nbut a habit.",
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(.95),
-                              fontSize: 20,
-                              height: 1.35,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
+                        // ✅ Quotes carousel instead of static text
+                        _quoteSection(),
                       ],
                     ),
                   ),
                   const SizedBox(height: 18),
+
                   // ===== Categories =====
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
