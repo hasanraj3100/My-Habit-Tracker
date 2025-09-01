@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
+import 'package:provider/provider.dart';
+import '../../../../core/providers/app_theme_provider.dart';
 import '../widgets/quote_section.dart';
 
 class HabitHeader extends StatelessWidget {
@@ -84,13 +86,19 @@ class HabitHeader extends StatelessWidget {
                     ),
                     Row(
                       children: [
-                        _roundIconButton(Icons.nightlight_round,
-                            onPressed: () {}),
-                        const SizedBox(width: 10),
-                        _roundIconButton(Icons.notifications_none_rounded,
-                            onPressed: () {}),
+                        Consumer<ThemeProvider>(
+                          builder: (context, themeProvider, _) {
+                            return _roundIconButton(
+                              themeProvider.isDarkMode
+                                  ? Icons.light_mode   // show sun if dark mode is on
+                                  : Icons.nightlight_round, // show moon if light mode
+                              onPressed: () => themeProvider.toggleTheme(),
+                            );
+                          },
+                        ),
                       ],
                     ),
+
                   ],
                 ),
                 const SizedBox(height: 28),

@@ -13,6 +13,7 @@ class AppColors {
 
   // --- LIGHT THEME ---
   static const backgroundLight = Color(0xFFF8FAFC);  // A slightly cleaner white
+  static const navBackgroundLight = Color(0xFF454444);
   static const surfaceLight = Color(0xFFFFFFFF);     // For cards, sheets, etc.
   static const surfaceMutedLight = Color(0xFFF1F5F9); // Softer card backgrounds
   static const borderLight = Color(0xFFE2E8F0);      // For dividers and borders

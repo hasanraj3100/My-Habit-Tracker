@@ -19,6 +19,7 @@ class _ThemeColors {
   final Color success;
   final Color error;
   final Color warning;
+  final Color navBackground;
 
   _ThemeColors.light()
       : background = AppColors.backgroundLight,
@@ -31,7 +32,8 @@ class _ThemeColors {
         secondary = AppColors.secondary,
         success = AppColors.success,
         error = AppColors.error,
-        warning = AppColors.warning;
+        warning = AppColors.warning,
+        navBackground = AppColors.navBackgroundLight;
 
   _ThemeColors.dark()
       : background = AppColors.backgroundDark,
@@ -44,5 +46,6 @@ class _ThemeColors {
         secondary = AppColors.secondaryDark,
         success = AppColors.successDark,
         error = AppColors.errorDark,
-        warning = AppColors.warningDark;
+        warning = AppColors.warningDark,
+        navBackground = AppColors.navBackgroundLight;
 }

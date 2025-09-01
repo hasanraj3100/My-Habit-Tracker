@@ -72,7 +72,7 @@ class CustomNavBar extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BottomAppBar(
-          color: context.colors.textPrimary.withOpacity(.9),
+          color: context.colors.navBackground.withOpacity(.9),
           elevation: 8,
           child: SizedBox(
             height: 72,
