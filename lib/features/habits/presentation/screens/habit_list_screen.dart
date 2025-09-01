@@ -15,25 +15,86 @@ class HabitListScreen extends StatefulWidget {
 }
 
 class _HabitListScreenState extends State<HabitListScreen> {
-  final List<String> _categories = ["Study", "Health", "Work", "Personal", "+ Add Category"];
+  List<String> _categories = [];
   int _navIndex = 0;
   bool _sortFinishedBottom = false;
+  String? _selectedCategory; // for filtering
+  final user = FirebaseAuth.instance.currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
 
   String _todayKey() => DateFormat("yyyy-MM-dd").format(DateTime.now());
 
-  int _todayWeekday() {
-    // Dart: Monday=1, ..., Sunday=7
-    return DateTime.now().weekday;
+  int _todayWeekday() => DateTime.now().weekday;
+
+  Future<void> _loadCategories() async {
+    if (user == null) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('settings')
+        .doc('preferences')
+        .get();
+
+    final categories = List<String>.from(doc.data()?['categories'] ?? []);
+    setState(() {
+      _categories = [...categories, "+ Add Category"];
+    });
   }
 
-  // Stream of habit documents for current user
-  Stream<QuerySnapshot<Map<String, dynamic>>> _habitsStream() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return const Stream.empty() as Stream<QuerySnapshot<Map<String, dynamic>>>;
+  Future<void> _addCategory() async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Add Category"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: "Category name"),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Cancel")),
+          ElevatedButton(
+              onPressed: () {
+                final newCat = controller.text.trim();
+                if (newCat.isNotEmpty) Navigator.pop(ctx, newCat);
+              },
+              child: const Text("Add")),
+        ],
+      ),
+    );
 
+    if (result != null && result.isNotEmpty) {
+      final prefRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .collection('settings')
+          .doc('preferences');
+
+      // update categories in Firestore
+      final currentDoc = await prefRef.get();
+      final currentCategories =
+      List<String>.from(currentDoc.data()?['categories'] ?? []);
+      currentCategories.add(result);
+      await prefRef.set({'categories': currentCategories});
+
+      setState(() {
+        _categories.insert(_categories.length - 1, result);
+      });
+    }
+  }
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> _habitsStream() {
+    if (user == null) return const Stream.empty() as Stream<QuerySnapshot<Map<String, dynamic>>>;
     return FirebaseFirestore.instance
         .collection('users')
-        .doc(user.uid)
+        .doc(user!.uid)
         .collection('habits')
         .orderBy('createdAt', descending: true)
         .snapshots();
@@ -44,10 +105,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
     final today = _todayKey();
 
     if (history.contains(today)) {
-      // Uncheck → remove today
       history.remove(today);
     } else {
-      // Check → add today
       history.add(today);
     }
 
@@ -67,13 +126,13 @@ class _HabitListScreenState extends State<HabitListScreen> {
   int _calculateStreak(List<String> history, String frequency, List<dynamic> weekdays) {
     if (history.isEmpty) return 0;
 
-    history.sort((a, b) => b.compareTo(a)); // latest first
+    history.sort((a, b) => b.compareTo(a));
     final parsed = history.map((d) => DateTime.parse(d)).toList();
 
     int streak = 0;
     DateTime today = DateTime.now();
 
-    if (frequency == "Daily") {
+    if (frequency.toLowerCase() == "daily") {
       DateTime check = today;
       for (var date in parsed) {
         if (date.year == check.year && date.month == check.month && date.day == check.day) {
@@ -83,8 +142,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
           break;
         }
       }
-    } else if (frequency == "Weekly") {
-      // check streak by week/day match
+    } else if (frequency.toLowerCase() == "weekly") {
       DateTime check = today;
       while (true) {
         if (weekdays.contains(check.weekday)) {
@@ -149,7 +207,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
               ),
               child: Column(
                 children: [
-                  // top row
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -218,23 +275,40 @@ class _HabitListScreenState extends State<HabitListScreen> {
                 scrollDirection: Axis.horizontal,
                 itemBuilder: (context, i) {
                   final isAdd = _categories[i].startsWith('+');
+                  final category = _categories[i];
+                  final isSelected = _selectedCategory == category;
+
                   return ChoiceChip(
-                    label: Text(_categories[i]),
-                    selected: false,
+                    label: Text(category),
+                    selected: isSelected,
                     onSelected: (_) {
                       if (isAdd) {
-                        // TODO: Add category
+                        _addCategory();
+                      } else {
+                        setState(() {
+                          if (_selectedCategory == category) {
+                            _selectedCategory = null;
+                          } else {
+                            _selectedCategory = category;
+                          }
+                        });
                       }
                     },
-                    labelStyle: const TextStyle(
-                        color: AppColors.textPrimary, fontWeight: FontWeight.w600),
-                    backgroundColor: isAdd ? Colors.white : AppColors.surface,
+                    labelStyle: TextStyle(
+                        color: isAdd
+                            ? AppColors.textPrimary
+                            : (isSelected ? Colors.white : AppColors.textPrimary),
+                        fontWeight: FontWeight.w600),
+                    backgroundColor:
+                    isAdd ? Colors.white : AppColors.surface,
+                    selectedColor: AppColors.primary,
                     shape: StadiumBorder(
                       side: BorderSide(
-                          color: isAdd
-                              ? AppColors.textSecondary.withOpacity(.35)
-                              : AppColors.primary.withOpacity(.35),
-                          width: 1.2),
+                        color: isAdd
+                            ? AppColors.textSecondary.withOpacity(.35)
+                            : AppColors.primary.withOpacity(.35),
+                        width: 1.2,
+                      ),
                     ),
                   );
                 },
@@ -289,6 +363,14 @@ class _HabitListScreenState extends State<HabitListScreen> {
 
                   var docs = snapshot.data!.docs;
 
+                  // filter by selected category
+                  if (_selectedCategory != null) {
+                    docs = docs
+                        .where((doc) =>
+                    doc.data()['category'] == _selectedCategory)
+                        .toList();
+                  }
+
                   if (_sortFinishedBottom) {
                     docs.sort((a, b) {
                       final aDone = _isDoneToday(a.data());
@@ -304,8 +386,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
                       final data = doc.data();
                       final frequency = data['frequency'] ?? '';
                       final weekdays = List<int>.from(data['weekdays'] ?? []);
-                      // Show daily habits or weekly habits where today is a scheduled day
-                      return frequency == 'Daily' || (frequency == 'Weekly' && weekdays.contains(todayWeekday));
+                      return frequency.toLowerCase() == 'daily' ||
+                          (frequency.toLowerCase() == 'weekly' && weekdays.contains(todayWeekday));
                     }).map((doc) {
                       final data = doc.data();
                       final done = _isDoneToday(data);
@@ -315,7 +397,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => HabitDetailsScreen(habitId: doc.id),
+                              builder: (_) =>
+                                  HabitDetailsScreen(habitId: doc.id),
                             ),
                           );
                         },
@@ -470,7 +553,7 @@ class _HabitCard extends StatelessWidget {
                     border: Border.all(color: AppColors.textSecondary.withOpacity(.25)),
                   ),
                   child: Text(
-                    frequency == "Weekly"
+                    frequency.toLowerCase() == "weekly"
                         ? "Weekly (${_weekdayLabel(weekdays)})"
                         : frequency,
                     style: const TextStyle(
