@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'habit_create_screen.dart';
+import 'habit_details_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 
 class HabitListScreen extends StatefulWidget {
@@ -309,14 +310,24 @@ class _HabitListScreenState extends State<HabitListScreen> {
                       final data = doc.data();
                       final done = _isDoneToday(data);
 
-                      return _HabitCard(
-                        title: data['title'] ?? 'Untitled',
-                        category: data['category'] ?? '',
-                        frequency: data['frequency'] ?? '',
-                        weekdays: List<int>.from(data['weekdays'] ?? []),
-                        streak: (data['streak'] is int) ? data['streak'] : 0,
-                        done: done,
-                        onToggle: () => _toggleHabit(doc.reference, data),
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => HabitDetailsScreen(habitId: doc.id),
+                            ),
+                          );
+                        },
+                        child: _HabitCard(
+                          title: data['title'] ?? 'Untitled',
+                          category: data['category'] ?? '',
+                          frequency: data['frequency'] ?? '',
+                          weekdays: List<int>.from(data['weekdays'] ?? []),
+                          streak: (data['streak'] is int) ? data['streak'] : 0,
+                          done: done,
+                          onToggle: () => _toggleHabit(doc.reference, data),
+                        ),
                       );
                     }).toList(),
                   );
