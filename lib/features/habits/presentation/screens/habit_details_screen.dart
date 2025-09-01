@@ -201,7 +201,6 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    // Update maxStreak when the screen is opened
     _updateMaxStreak();
   }
 
@@ -224,303 +223,369 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data?.data() == null) {
-            return const Center(child: Text('Habit not found', style: TextStyle(color: AppColors.textSecondary)));
+            return const Center(
+                child: Text('Habit not found',
+                    style: TextStyle(color: AppColors.textSecondary)));
           }
 
           final data = snapshot.data!.data()!;
           final done = _isDoneToday(data);
-          final events = _getCalendarEvents(List<String>.from(data['history'] ?? []));
-          final missedDays = _getMissedDays(List<String>.from(data['history'] ?? []), data['frequency'] ?? 'Daily', List<int>.from(data['weekdays'] ?? []));
+          final events =
+          _getCalendarEvents(List<String>.from(data['history'] ?? []));
+          final missedDays = _getMissedDays(
+              List<String>.from(data['history'] ?? []),
+              data['frequency'] ?? 'Daily',
+              List<int>.from(data['weekdays'] ?? []));
           final frequency = data['frequency'] ?? 'Daily';
           final weekdays = List<int>.from(data['weekdays'] ?? []);
 
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header Card
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceMuted,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          data['category'] ?? '',
-                          style: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          data['title'] ?? 'Untitled',
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 24,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Current Streak: ${data['streak'] ?? 0}',
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Text(
-                                  'Max Streak: ${(data['maxStreak'] is int) ? data['maxStreak'] : 0}',
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+          return Stack(
+            children: [
+              SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Card
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            data['category'] ?? '',
+                            style: const TextStyle(
+                              color: AppColors.textSecondary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
                             ),
-                            InkWell(
-                              onTap: () => _toggleHabit(
-                                FirebaseFirestore.instance
-                                    .collection('users')
-                                    .doc(FirebaseAuth.instance.currentUser!.uid)
-                                    .collection('habits')
-                                    .doc(widget.habitId),
-                                data,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            data['title'] ?? 'Untitled',
+                            style: const TextStyle(
+                              color: AppColors.textPrimary,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Current Streak: ${data['streak'] ?? 0}',
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Max Streak: ${(data['maxStreak'] is int) ? data['maxStreak'] : 0}',
+                                    style: const TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              borderRadius: BorderRadius.circular(6),
-                              child: Container(
-                                width: 30,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: AppColors.textSecondary.withOpacity(.6), width: 1.4),
-                                  color: done ? AppColors.success.withOpacity(.15) : Colors.transparent,
+                              InkWell(
+                                onTap: () => _toggleHabit(
+                                  FirebaseFirestore.instance
+                                      .collection('users')
+                                      .doc(FirebaseAuth.instance.currentUser!.uid)
+                                      .collection('habits')
+                                      .doc(widget.habitId),
+                                  data,
                                 ),
-                                child: done
-                                    ? const Icon(Icons.check, size: 20, color: AppColors.success)
-                                    : const SizedBox.shrink(),
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  width: 30,
+                                  height: 30,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: AppColors.textSecondary.withOpacity(.6), width: 1.4),
+                                    color: done ? AppColors.success.withOpacity(.15) : Colors.transparent,
+                                  ),
+                                  child: done
+                                      ? const Icon(Icons.check, size: 20, color: AppColors.success)
+                                      : const SizedBox.shrink(),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (data['note'] != null && data['note'].isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            Text(
+                              data['note'],
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ],
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Calendar
+                    const Text(
+                      'Completion History',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: TableCalendar(
+                        firstDay: DateTime.now().subtract(const Duration(days: 365)),
+                        lastDay: DateTime.now(),
+                        focusedDay: DateTime.now(),
+                        calendarFormat: CalendarFormat.month,
+                        headerStyle: const HeaderStyle(
+                          formatButtonVisible: false,
+                          titleCentered: true,
+                          titleTextStyle: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                        if (data['note'] != null && data['note'].isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            data['note'],
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                        calendarStyle: CalendarStyle(
+                          todayDecoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
+                          weekendTextStyle: const TextStyle(color: AppColors.textPrimary),
+                          outsideTextStyle: const TextStyle(color: AppColors.textSecondary),
+                        ),
+                        daysOfWeekStyle: const DaysOfWeekStyle(
+                          weekdayStyle: TextStyle(color: AppColors.textSecondary),
+                          weekendStyle: TextStyle(color: AppColors.textSecondary),
+                        ),
+                        calendarBuilders: CalendarBuilders(
+                          markerBuilder: (context, date, _) {
+                            final dateKey = DateTime(date.year, date.month, date.day);
+                            final isToday = dateKey.isAtSameMomentAs(DateTime.now().copyWith(hour: 0, minute: 0, second: 0, millisecond: 0));
+                            if (frequency == 'Weekly' && !weekdays.contains(date.weekday)) {
+                              return null; // Don't show markers for non-scheduled days
+                            }
+                            if (events.containsKey(dateKey)) {
+                              return Container(
+                                margin: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.success,
+                                  border: Border.all(color: AppColors.success.withOpacity(0.8), width: 2),
+                                ),
+                                width: 12,
+                                height: 12,
+                              );
+                            }
+                            if (missedDays.contains(dateKey) && !isToday) {
+                              return Container(
+                                margin: const EdgeInsets.all(2),
+                                child: Icon(
+                                  Icons.close,
+                                  color: Colors.redAccent,
+                                  size: 16,
+                                ),
+                              );
+                            }
+                            return null;
+                          },
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    // Frequency Chart
+                    const Text(
+                      'Completion Rate',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              ChoiceChip(
+                                label: const Text('Weekly'),
+                                selected: _isChartWeekly,
+                                onSelected: (_) => setState(() => _isChartWeekly = true),
+                                selectedColor: AppColors.primary.withOpacity(0.2),
+                                labelStyle: TextStyle(
+                                  color: _isChartWeekly ? AppColors.primary : AppColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              ChoiceChip(
+                                label: const Text('Monthly'),
+                                selected: !_isChartWeekly,
+                                onSelected: (_) => setState(() => _isChartWeekly = false),
+                                selectedColor: AppColors.primary.withOpacity(0.2),
+                                labelStyle: TextStyle(
+                                  color: !_isChartWeekly ? AppColors.primary : AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            height: 200,
+                            child: LineChart(
+                              LineChartData(
+                                gridData: const FlGridData(show: true),
+                                titlesData: FlTitlesData(
+                                  leftTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      reservedSize: 40,
+                                      getTitlesWidget: (value, meta) => Text(
+                                        '${value.toInt()}%',
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  bottomTitles: AxisTitles(
+                                    sideTitles: SideTitles(
+                                      showTitles: true,
+                                      getTitlesWidget: (value, meta) => Text(
+                                        _isChartWeekly ? 'W${value.toInt() + 1}' : 'M${value.toInt() + 1}',
+                                        style: const TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                ),
+                                borderData: FlBorderData(show: true, border: Border.all(color: AppColors.textSecondary.withOpacity(0.2))),
+                                minX: 0,
+                                maxX: _isChartWeekly ? 7 : 5,
+                                minY: 0,
+                                maxY: 100,
+                                lineBarsData: [
+                                  LineChartBarData(
+                                    spots: _getChartData(data, _isChartWeekly),
+                                    isCurved: true,
+                                    color: AppColors.primary,
+                                    barWidth: 3,
+                                    belowBarData: BarAreaData(
+                                      show: true,
+                                      color: AppColors.primary.withOpacity(0.2),
+                                    ),
+                                    dotData: const FlDotData(show: true),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Calendar
-                  const Text(
-                    'Completion History',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceMuted,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: TableCalendar(
-                      firstDay: DateTime.now().subtract(const Duration(days: 365)),
-                      lastDay: DateTime.now(),
-                      focusedDay: DateTime.now(),
-                      calendarFormat: CalendarFormat.month,
-                      headerStyle: const HeaderStyle(
-                        formatButtonVisible: false,
-                        titleCentered: true,
-                        titleTextStyle: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      calendarStyle: CalendarStyle(
-                        todayDecoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.3),
-                          shape: BoxShape.circle,
-                        ),
-                        defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
-                        weekendTextStyle: const TextStyle(color: AppColors.textPrimary),
-                        outsideTextStyle: const TextStyle(color: AppColors.textSecondary),
-                      ),
-                      daysOfWeekStyle: const DaysOfWeekStyle(
-                        weekdayStyle: TextStyle(color: AppColors.textSecondary),
-                        weekendStyle: TextStyle(color: AppColors.textSecondary),
-                      ),
-                      calendarBuilders: CalendarBuilders(
-                        markerBuilder: (context, date, _) {
-                          final dateKey = DateTime(date.year, date.month, date.day);
-                          final isToday = dateKey.isAtSameMomentAs(DateTime.now().copyWith(hour: 0, minute: 0, second: 0, millisecond: 0));
-                          if (frequency == 'Weekly' && !weekdays.contains(date.weekday)) {
-                            return null; // Don't show markers for non-scheduled days
-                          }
-                          if (events.containsKey(dateKey)) {
-                            return Container(
-                              margin: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: AppColors.success,
-                                border: Border.all(color: AppColors.success.withOpacity(0.8), width: 2),
-                              ),
-                              width: 12,
-                              height: 12,
-                            );
-                          }
-                          if (missedDays.contains(dateKey) && !isToday) {
-                            return Container(
-                              margin: const EdgeInsets.all(2),
-                              child: Icon(
-                                Icons.close,
-                                color: Colors.redAccent,
-                                size: 16,
-                              ),
-                            );
-                          }
-                          return null;
-                        },
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 24),
-
-                  // Frequency Chart
-                  const Text(
-                    'Completion Rate',
-                    style: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surfaceMuted,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            ChoiceChip(
-                              label: const Text('Weekly'),
-                              selected: _isChartWeekly,
-                              onSelected: (_) => setState(() => _isChartWeekly = true),
-                              selectedColor: AppColors.primary.withOpacity(0.2),
-                              labelStyle: TextStyle(
-                                color: _isChartWeekly ? AppColors.primary : AppColors.textSecondary,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            ChoiceChip(
-                              label: const Text('Monthly'),
-                              selected: !_isChartWeekly,
-                              onSelected: (_) => setState(() => _isChartWeekly = false),
-                              selectedColor: AppColors.primary.withOpacity(0.2),
-                              labelStyle: TextStyle(
-                                color: !_isChartWeekly ? AppColors.primary : AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          height: 200,
-                          child: LineChart(
-                            LineChartData(
-                              gridData: const FlGridData(show: true),
-                              titlesData: FlTitlesData(
-                                leftTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    reservedSize: 40,
-                                    getTitlesWidget: (value, meta) => Text(
-                                      '${value.toInt()}%',
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                bottomTitles: AxisTitles(
-                                  sideTitles: SideTitles(
-                                    showTitles: true,
-                                    getTitlesWidget: (value, meta) => Text(
-                                      _isChartWeekly ? 'W${value.toInt() + 1}' : 'M${value.toInt() + 1}',
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                              ),
-                              borderData: FlBorderData(show: true, border: Border.all(color: AppColors.textSecondary.withOpacity(0.2))),
-                              minX: 0,
-                              maxX: _isChartWeekly ? 7 : 5,
-                              minY: 0,
-                              maxY: 100,
-                              lineBarsData: [
-                                LineChartBarData(
-                                  spots: _getChartData(data, _isChartWeekly),
-                                  isCurved: true,
-                                  color: AppColors.primary,
-                                  barWidth: 3,
-                                  belowBarData: BarAreaData(
-                                    show: true,
-                                    color: AppColors.primary.withOpacity(0.2),
-                                  ),
-                                  dotData: const FlDotData(show: true),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-                ],
+                    const SizedBox(height: 100), // leave space for bottom button
+                  ],
+                ),
               ),
-            ),
+
+              // Delete Button
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Text(
+                    'Delete Habit',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Delete Habit'),
+                        content: const Text(
+                            'Are you sure you want to delete this habit? This action cannot be undone.'),
+                        actions: [
+                          TextButton(
+                            child: const Text('Cancel'),
+                            onPressed: () => Navigator.of(context).pop(false),
+                          ),
+                          TextButton(
+                            child: const Text(
+                              'Delete',
+                              style: TextStyle(color: Colors.redAccent),
+                            ),
+                            onPressed: () => Navigator.of(context).pop(true),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirm == true) {
+                      final user = FirebaseAuth.instance.currentUser;
+                      if (user != null) {
+                        await FirebaseFirestore.instance
+                            .collection('users')
+                            .doc(user.uid)
+                            .collection('habits')
+                            .doc(widget.habitId)
+                            .delete();
+                        Navigator.pop(context);
+                      }
+                    }
+                  },
+                ),
+              ),
+            ],
           );
         },
       ),

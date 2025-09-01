@@ -1,4 +1,6 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../data/habit_repository.dart';
 import '../../data/models/habit_model.dart';
 
@@ -139,6 +141,117 @@ class HabitProvider with ChangeNotifier {
     }
 
     return streak;
+  }
+
+  // Toggle habit completion for today
+  Future<void> toggleHabit(HabitModel habit) async {
+    _setLoading(true);
+    try {
+      final updatedHistory = List<String>.from(habit.history);
+      final today = DateFormat("yyyy-MM-dd").format(DateTime.now());
+      if (updatedHistory.contains(today)) {
+        updatedHistory.remove(today);
+      } else {
+        updatedHistory.add(today);
+      }
+      final streak = await calculateStreak(updatedHistory, habit.frequency, habit.weekdays);
+      final newMaxStreak = streak > habit.maxStreak ? streak : habit.maxStreak;
+      final updatedHabit = habit.copyWith(
+        history: updatedHistory,
+        streak: streak,
+        maxStreak: newMaxStreak,
+      );
+      await updateHabit(updatedHabit);
+      _error = null;
+    } catch (e) {
+      _error = e.toString();
+      rethrow;
+    } finally {
+      _setLoading(false);
+      notifyListeners();
+    }
+  }
+
+  // Check if habit is done today
+  bool isDoneToday(HabitModel habit) {
+    return habit.history.contains(DateFormat("yyyy-MM-dd").format(DateTime.now()));
+  }
+
+  // Get calendar events for habit history
+  Map<DateTime, bool> getCalendarEvents(HabitModel habit) {
+    final events = <DateTime, bool>{};
+    for (var dateStr in habit.history) {
+      final date = DateTime.parse(dateStr);
+      events[DateTime(date.year, date.month, date.day)] = true;
+    }
+    return events;
+  }
+
+  // Get missed days for habit
+  List<DateTime> getMissedDays(HabitModel habit) {
+    final missedDays = <DateTime>[];
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final start = today.subtract(const Duration(days: 365));
+
+    for (var date = start; date.isBefore(today); date = date.add(const Duration(days: 1))) {
+      final dateKey = DateFormat("yyyy-MM-dd").format(date);
+      final isExpected =
+          habit.frequency == 'Daily' || (habit.frequency == 'Weekly' && habit.weekdays.contains(date.weekday));
+      if (isExpected && !habit.history.contains(dateKey)) {
+        missedDays.add(DateTime(date.year, date.month, date.day));
+      }
+    }
+    return missedDays;
+  }
+
+  // Get chart data for habit completion rate
+  List<FlSpot> getChartData(HabitModel habit, bool isWeekly) {
+    final spots = <FlSpot>[];
+    final now = DateTime.now();
+
+    if (isWeekly) {
+      for (int i = 7; i >= 0; i--) {
+        final weekStart = now.subtract(Duration(days: now.weekday + 7 * i));
+        final weekEnd = weekStart.add(const Duration(days: 6));
+        int totalDays = habit.frequency == 'Daily' ? 7 : habit.weekdays.length;
+        if (totalDays == 0) totalDays = 1;
+        int completedDays = 0;
+
+        for (var dateStr in habit.history) {
+          final date = DateTime.parse(dateStr);
+          if (date.isAfter(weekStart) && date.isBefore(weekEnd.add(const Duration(days: 1)))) {
+            if (habit.frequency == 'Daily' || habit.weekdays.contains(date.weekday)) {
+              completedDays++;
+            }
+          }
+        }
+        final percentage = (completedDays / totalDays) * 100;
+        spots.add(FlSpot(7 - i.toDouble(), percentage));
+      }
+    } else {
+      for (int i = 5; i >= 0; i--) {
+        final monthStart = DateTime(now.year, now.month - i, 1);
+        final monthEnd = DateTime(now.year, now.month - i + 1, 1).subtract(const Duration(days: 1));
+        int totalDays =
+        habit.frequency == 'Daily' ? monthEnd.day : habit.weekdays.length * ((monthEnd.day / 7).ceil());
+        if (totalDays == 0) totalDays = 1;
+        int completedDays = 0;
+
+        for (var dateStr in habit.history) {
+          final date = DateTime.parse(dateStr);
+          if (date.isAfter(monthStart.subtract(const Duration(days: 1))) &&
+              date.isBefore(monthEnd.add(const Duration(days: 1)))) {
+            if (habit.frequency == 'Daily' || habit.weekdays.contains(date.weekday)) {
+              completedDays++;
+            }
+          }
+        }
+        final percentage = (completedDays / totalDays) * 100;
+        spots.add(FlSpot(5 - i.toDouble(), percentage));
+      }
+    }
+    return spots;
   }
 
   void _setLoading(bool value) {
