@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 
 class HabitDeleteButton extends StatelessWidget {
   final String habitId;
@@ -19,9 +20,9 @@ class HabitDeleteButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        child: const Text(
+        child: Text(
           'Delete Habit',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.colors.background),
         ),
         onPressed: () async {
           final confirm = await showDialog<bool>(

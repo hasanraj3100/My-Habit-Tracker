@@ -189,8 +189,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 }
                               }
                             },
-                            icon: const Icon(Icons.save),
-                            label: const Text("Save Changes"),
+                            icon: Icon(Icons.save, color: context.colors.textPrimary),
+                            label: Text(
+                              "Save Changes",
+                              style: TextStyle(color: context.colors.textPrimary),
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: context.colors.primary,
                               shape: RoundedRectangleBorder(
@@ -205,18 +208,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           height: 50,
                           child: ElevatedButton.icon(
                             onPressed: _logout,
-                            icon: const Icon(Icons.delete),
-                            label: const Text("Logout",
-                              style: TextStyle(color: Colors.white),
+                            icon: Icon(Icons.logout, color: context.colors.textPrimary),
+                            label: Text(
+                              "Logout",
+                              style: TextStyle(color: context.colors.textPrimary),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.redAccent,
+                              backgroundColor: context.colors.error,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
                           ),
                         ),
+
                         const SizedBox(height: 30),
                       ],
                     ),

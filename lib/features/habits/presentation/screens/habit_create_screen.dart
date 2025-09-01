@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:my_habit_tracker/core/constants/app_colors.dart';
 import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 
 class HabitCreateScreen extends StatefulWidget {
@@ -281,9 +282,9 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
+                child: Text(
                   "Save Habit",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: context.colors.background),
                 ),
               ),
             ],
