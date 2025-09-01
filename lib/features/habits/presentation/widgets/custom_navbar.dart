@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:my_habit_tracker/features/settings/presentation/screens/settings_screen.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../screens/habit_create_screen.dart';
 import '../screens/favourite_quote_screen.dart';
@@ -37,6 +38,10 @@ class CustomNavBar extends StatelessWidget {
           return;
         } else if (index == 1) {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const FavouriteQuotesPage()));
+          return;
+        }
+        else if (index == 3) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsPage()));
           return;
         }
         onIndexChange(index);
