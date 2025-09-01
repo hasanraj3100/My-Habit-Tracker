@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../widgets/habit_calendar.dart';
 import '../widgets/habit_completion_chart.dart';
@@ -97,6 +96,7 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
               List<int>.from(data['weekdays'] ?? []));
           final frequency = data['frequency'] ?? 'Daily';
           final weekdays = List<int>.from(data['weekdays'] ?? []);
+          final note = data['note'] ?? '';
 
           return Stack(
             children: [
@@ -111,7 +111,43 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
                       done: done,
                       habitId: widget.habitId,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+
+                    // --- Habit Note Card ---
+                    if (note.isNotEmpty)
+                      Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                        color: Colors.white,
+                        margin: const EdgeInsets.only(bottom: 24),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Note',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                note,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
                     HabitCalendar(
                       events: events,
                       missedDays: missedDays,
