@@ -7,14 +7,19 @@ class HabitCreateScreen extends StatefulWidget {
   const HabitCreateScreen({super.key});
 
   @override
-  State<HabitCreateScreen> createState() => _AddHabitPageState();
+  State<HabitCreateScreen> createState() => _HabitCreateScreenState();
 }
 
-class _AddHabitPageState extends State<HabitCreateScreen> {
+class _HabitCreateScreenState extends State<HabitCreateScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
+
   String _selectedCategory = "Health";
-  String _selectedFrequency = "Daily";
+  String _selectedFrequency = "Daily"; // "Daily" | "Weekly"
+  int? _selectedWeeklyDay; // 1 (Mon) .. 7 (Sun)
+
+  bool _isSaving = false;
 
   final List<String> _categories = [
     "Health",
@@ -22,18 +27,88 @@ class _AddHabitPageState extends State<HabitCreateScreen> {
     "Study",
     "Work",
     "Personal",
-    "Add New"
+    "Add New",
   ];
 
-  Future<void> _saveHabit() async {
-    if (_formKey.currentState!.validate()) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+  final Map<int, String> _weekdays = const {
+    1: "Monday",
+    2: "Tuesday",
+    3: "Wednesday",
+    4: "Thursday",
+    5: "Friday",
+    6: "Saturday",
+    7: "Sunday",
+  };
 
-      final habitData = {
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _showAddCategoryDialog() async {
+    final TextEditingController categoryController = TextEditingController();
+    await showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text("Add New Category"),
+          content: TextField(
+            controller: categoryController,
+            decoration: const InputDecoration(hintText: "Enter category name"),
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () {
+                final newCat = categoryController.text.trim();
+                if (newCat.isNotEmpty) {
+                  setState(() {
+                    _categories.insert(_categories.length - 1, newCat);
+                    _selectedCategory = newCat;
+                  });
+                }
+                Navigator.pop(ctx);
+              },
+              child: const Text("Add"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _saveHabit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedFrequency == "Weekly" && (_selectedWeeklyDay == null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select the weekday for weekly habit.")),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception("No logged in user");
+      }
+
+      final habitData = <String, dynamic>{
         "title": _titleController.text.trim(),
+        "note": _noteController.text.trim(),
         "category": _selectedCategory,
         "frequency": _selectedFrequency,
+        "weeklyDay": _selectedFrequency == "Weekly" ? _selectedWeeklyDay : null,
+        "history": <Timestamp>[], // will store Timestamps of success dates
         "streak": 0,
         "isDone": false,
         "createdAt": FieldValue.serverTimestamp(),
@@ -45,40 +120,20 @@ class _AddHabitPageState extends State<HabitCreateScreen> {
           .collection("habits")
           .add(habitData);
 
-      Navigator.pop(context); // Go back after saving
-    }
-  }
-
-  void _showAddCategoryDialog() {
-    TextEditingController categoryController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text("Add New Category"),
-          content: TextField(
-            controller: categoryController,
-            decoration: const InputDecoration(
-              hintText: "Enter category name",
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                if (categoryController.text.trim().isNotEmpty) {
-                  setState(() {
-                    _categories.insert(_categories.length - 1, categoryController.text.trim());
-                    _selectedCategory = categoryController.text.trim();
-                  });
-                  Navigator.pop(ctx);
-                }
-              },
-              child: const Text("Add"),
-            ),
-          ],
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Habit created successfully.")),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to create habit: $e")),
         );
-      },
-    );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   @override
@@ -87,8 +142,8 @@ class _AddHabitPageState extends State<HabitCreateScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        title: const Text("Add Habit"),
         foregroundColor: Colors.white,
+        title: const Text("Add Habit"),
         elevation: 0,
       ),
       body: Padding(
@@ -102,70 +157,95 @@ class _AddHabitPageState extends State<HabitCreateScreen> {
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: "Habit Title",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                validator: (value) =>
-                value == null || value.isEmpty ? "Please enter a title" : null,
+                validator: (value) => (value == null || value.trim().isEmpty) ? "Please enter a title" : null,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
+
+              // Note / Description
+              TextFormField(
+                controller: _noteController,
+                minLines: 3,
+                maxLines: 6,
+                decoration: InputDecoration(
+                  labelText: "Note (optional)",
+                  hintText: "Describe this habit or add any reminders...",
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+              const SizedBox(height: 14),
 
               // Category Dropdown
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
-                items: _categories.map((category) {
-                  return DropdownMenuItem(
-                    value: category,
-                    child: Text(category),
-                  );
-                }).toList(),
+                items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                 onChanged: (value) {
+                  if (value == null) return;
                   if (value == "Add New") {
                     _showAddCategoryDialog();
                   } else {
-                    setState(() => _selectedCategory = value!);
+                    setState(() => _selectedCategory = value);
                   }
                 },
                 decoration: InputDecoration(
                   labelText: "Category",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
 
               // Frequency Dropdown
               DropdownButtonFormField<String>(
                 value: _selectedFrequency,
-                items: ["Daily", "Weekly"].map((freq) {
-                  return DropdownMenuItem(
-                    value: freq,
-                    child: Text(freq),
-                  );
-                }).toList(),
+                items: ["Daily", "Weekly"].map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
                 onChanged: (value) {
-                  setState(() => _selectedFrequency = value!);
+                  if (value == null) return;
+                  setState(() {
+                    _selectedFrequency = value;
+                    if (_selectedFrequency != "Weekly") _selectedWeeklyDay = null;
+                  });
                 },
                 decoration: InputDecoration(
                   labelText: "Frequency",
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 12),
 
-              // Save Button
-              ElevatedButton(
+              // If Weekly, show weekday selector
+              if (_selectedFrequency == "Weekly") ...[
+                DropdownButtonFormField<int>(
+                  value: _selectedWeeklyDay,
+                  items: _weekdays.entries
+                      .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
+                      .toList(),
+                  onChanged: (value) => setState(() => _selectedWeeklyDay = value),
+                  validator: (v) {
+                    if (_selectedFrequency == "Weekly" && v == null) {
+                      return "Select a day of week";
+                    }
+                    return null;
+                  },
+                  decoration: InputDecoration(
+                    labelText: "Day of Week",
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              const SizedBox(height: 18),
+
+              // Save button
+              _isSaving
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
                 onPressed: _saveHabit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: const Text(
                   "Save Habit",
