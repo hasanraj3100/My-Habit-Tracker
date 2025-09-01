@@ -15,21 +15,14 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _noteController = TextEditingController();
 
-  String _selectedCategory = "Health";
-  String _selectedFrequency = "Daily"; // "Daily" | "Weekly"
-  List<int> _selectedWeekdays = []; // multiple days
+  String _selectedCategory = "";
+  String _selectedFrequency = "Daily";
+  List<int> _selectedWeekdays = [];
 
   bool _isSaving = false;
+  final user = FirebaseAuth.instance.currentUser;
 
-  final List<String> _categories = [
-    "Health",
-    "Fitness",
-    "Study",
-    "Work",
-    "Personal",
-    "Add New",
-  ];
-
+  List<String> _categories = ["Add New"];
   final Map<int, String> _weekdays = const {
     1: "Monday",
     2: "Tuesday",
@@ -41,46 +34,81 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    _loadCategories();
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _noteController.dispose();
     super.dispose();
   }
 
+  Future<void> _loadCategories() async {
+    if (user == null) return;
+    final doc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user!.uid)
+        .collection('settings')
+        .doc('preferences')
+        .get();
+    final categories = List<String>.from(doc.data()?['categories'] ?? []);
+    setState(() {
+      _categories = [...categories, "Add New"];
+      if (_categories.isNotEmpty) _selectedCategory = _categories.first;
+    });
+  }
+
   Future<void> _showAddCategoryDialog() async {
     final TextEditingController categoryController = TextEditingController();
-    await showDialog(
+    final result = await showDialog<String>(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text("Add New Category"),
-          content: TextField(
-            controller: categoryController,
-            decoration: const InputDecoration(hintText: "Enter category name"),
-            autofocus: true,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Add New Category"),
+        content: TextField(
+          controller: categoryController,
+          decoration: const InputDecoration(hintText: "Enter category name"),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text("Cancel"),
-            ),
-            TextButton(
-              onPressed: () {
-                final newCat = categoryController.text.trim();
-                if (newCat.isNotEmpty) {
-                  setState(() {
-                    _categories.insert(_categories.length - 1, newCat);
-                    _selectedCategory = newCat;
-                  });
-                }
-                Navigator.pop(ctx);
-              },
-              child: const Text("Add"),
-            ),
-          ],
-        );
-      },
+          TextButton(
+            onPressed: () {
+              final newCat = categoryController.text.trim();
+              if (newCat.isNotEmpty) Navigator.pop(ctx, newCat);
+            },
+            child: const Text("Add"),
+          ),
+        ],
+      ),
     );
+
+    if (result != null && result.isNotEmpty) {
+      // Save new category to Firestore
+      final prefRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .collection('settings')
+          .doc('preferences');
+
+      final currentDoc = await prefRef.get();
+      final currentCategories =
+      List<String>.from(currentDoc.data()?['categories'] ?? []);
+      if (!currentCategories.contains(result)) {
+        currentCategories.add(result);
+        await prefRef.set({'categories': currentCategories});
+      }
+
+      setState(() {
+        _categories.insert(_categories.length - 1, result);
+        _selectedCategory = result;
+      });
+    }
   }
 
   Future<void> _saveHabit() async {
@@ -95,7 +123,6 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
 
     setState(() => _isSaving = true);
     try {
-      final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception("No logged in user");
 
       final habitData = <String, dynamic>{
@@ -104,7 +131,7 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
         "category": _selectedCategory,
         "frequency": _selectedFrequency,
         "weekdays": _selectedFrequency == "Weekly" ? _selectedWeekdays : [],
-        "history": <Timestamp>[],
+        "history": <String>[],
         "streak": 0,
         "maxStreak": 0,
         "createdAt": FieldValue.serverTimestamp(),
@@ -112,7 +139,7 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
 
       await FirebaseFirestore.instance
           .collection("users")
-          .doc(user.uid)
+          .doc(user!.uid)
           .collection("habits")
           .add(habitData);
 
@@ -160,7 +187,7 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
               ),
               const SizedBox(height: 14),
 
-              // Note / Description
+              // Note
               TextFormField(
                 controller: _noteController,
                 minLines: 3,
@@ -175,7 +202,7 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
 
               // Category Dropdown
               DropdownButtonFormField<String>(
-                value: _selectedCategory,
+                value: _selectedCategory.isNotEmpty ? _selectedCategory : null,
                 items: _categories
                     .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                     .toList(),
@@ -214,7 +241,7 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
               ),
               const SizedBox(height: 12),
 
-              // If Weekly, show multi-day selector
+              // Weekly Days Selector
               if (_selectedFrequency == "Weekly") ...[
                 const Text("Select weekdays:",
                     style: TextStyle(fontWeight: FontWeight.w600)),
@@ -243,7 +270,6 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
 
               const SizedBox(height: 18),
 
-              // Save button
               _isSaving
                   ? const Center(child: CircularProgressIndicator())
                   : ElevatedButton(
