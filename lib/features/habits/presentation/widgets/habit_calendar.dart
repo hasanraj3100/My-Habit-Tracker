@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../../../../core/constants/app_colors.dart';
 
 class HabitCalendar extends StatelessWidget {
   final Map<DateTime, bool> events;
@@ -21,10 +21,10 @@ class HabitCalendar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Completion History',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: context.colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.w700,
           ),
@@ -33,7 +33,7 @@ class HabitCalendar extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.surfaceMuted,
+            color: context.colors.surfaceMuted,
             borderRadius: BorderRadius.circular(16),
           ),
           child: TableCalendar(
@@ -41,27 +41,27 @@ class HabitCalendar extends StatelessWidget {
             lastDay: DateTime.now(),
             focusedDay: DateTime.now(),
             calendarFormat: CalendarFormat.month,
-            headerStyle: const HeaderStyle(
+            headerStyle: HeaderStyle(
               formatButtonVisible: false,
               titleCentered: true,
               titleTextStyle: TextStyle(
-                color: AppColors.textPrimary,
+                color: context.colors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
             ),
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.3),
+                color: context.colors.primary.withOpacity(0.3),
                 shape: BoxShape.circle,
               ),
-              defaultTextStyle: const TextStyle(color: AppColors.textPrimary),
-              weekendTextStyle: const TextStyle(color: AppColors.textPrimary),
-              outsideTextStyle: const TextStyle(color: AppColors.textSecondary),
+              defaultTextStyle: TextStyle(color: context.colors.textPrimary),
+              weekendTextStyle: TextStyle(color: context.colors.textPrimary),
+              outsideTextStyle: TextStyle(color: context.colors.textSecondary),
             ),
-            daysOfWeekStyle: const DaysOfWeekStyle(
-              weekdayStyle: TextStyle(color: AppColors.textSecondary),
-              weekendStyle: TextStyle(color: AppColors.textSecondary),
+            daysOfWeekStyle: DaysOfWeekStyle(
+              weekdayStyle: TextStyle(color: context.colors.textSecondary),
+              weekendStyle: TextStyle(color: context.colors.textSecondary),
             ),
             calendarBuilders: CalendarBuilders(
               markerBuilder: (context, date, _) {
@@ -75,8 +75,8 @@ class HabitCalendar extends StatelessWidget {
                     margin: const EdgeInsets.all(2),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.success,
-                      border: Border.all(color: AppColors.success.withOpacity(0.8), width: 2),
+                      color: context.colors.success,
+                      border: Border.all(color: context.colors.success.withOpacity(0.8), width: 2),
                     ),
                     width: 12,
                     height: 12,

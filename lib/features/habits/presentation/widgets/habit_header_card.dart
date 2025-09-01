@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'habit_utils.dart';
 
 class HabitHeaderCard extends StatelessWidget {
@@ -21,7 +21,7 @@ class HabitHeaderCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: context.colors.surfaceMuted,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -29,8 +29,8 @@ class HabitHeaderCard extends StatelessWidget {
         children: [
           Text(
             data['category'] ?? '',
-            style: const TextStyle(
-              color: AppColors.textSecondary,
+            style: TextStyle(
+              color: context.colors.textSecondary,
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),
@@ -38,8 +38,8 @@ class HabitHeaderCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             data['title'] ?? 'Untitled',
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: context.colors.textPrimary,
               fontSize: 24,
               fontWeight: FontWeight.w800,
             ),
@@ -53,16 +53,16 @@ class HabitHeaderCard extends StatelessWidget {
                 children: [
                   Text(
                     'Current Streak: ${data['streak'] ?? 0}',
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
+                    style: TextStyle(
+                      color: context.colors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
                     'Max Streak: ${(data['maxStreak'] is int) ? data['maxStreak'] : 0}',
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: context.colors.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -84,11 +84,11 @@ class HabitHeaderCard extends StatelessWidget {
                   height: 30,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppColors.textSecondary.withOpacity(.6), width: 1.4),
-                    color: done ? AppColors.success.withOpacity(.15) : Colors.transparent,
+                    border: Border.all(color: context.colors.textSecondary.withOpacity(.6), width: 1.4),
+                    color: done ? context.colors.success.withOpacity(.15) : Colors.transparent,
                   ),
                   child: done
-                      ? const Icon(Icons.check, size: 20, color: AppColors.success)
+                      ? Icon(Icons.check, size: 20, color: context.colors.success)
                       : const SizedBox.shrink(),
                 ),
               ),
@@ -98,8 +98,8 @@ class HabitHeaderCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               data['note'],
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: context.colors.textSecondary,
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),

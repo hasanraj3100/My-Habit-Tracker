@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import '../widgets/quote_section.dart';
 
 class HabitHeader extends StatelessWidget {
@@ -58,8 +58,8 @@ class HabitHeader extends StatelessWidget {
                         CircleAvatar(
                           radius: 24,
                           backgroundColor: Colors.white.withOpacity(.9),
-                          child: const Icon(Icons.person,
-                              color: AppColors.textSecondary),
+                          child: Icon(Icons.person,
+                              color: context.colors.textSecondary),
                         ),
                         const SizedBox(width: 12),
                         Column(

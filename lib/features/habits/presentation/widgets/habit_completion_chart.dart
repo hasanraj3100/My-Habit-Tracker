@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'habit_utils.dart'; // Make sure this file contains the getChartData function
 
 class HabitCompletionChart extends StatefulWidget {
@@ -23,10 +23,10 @@ class _HabitCompletionChartState extends State<HabitCompletionChart> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Completion Rate',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: context.colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.w700,
           ),
@@ -35,7 +35,7 @@ class _HabitCompletionChartState extends State<HabitCompletionChart> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.surfaceMuted,
+            color: context.colors.surfaceMuted,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -51,9 +51,9 @@ class _HabitCompletionChartState extends State<HabitCompletionChart> {
                         _isWeekly = true;
                       });
                     },
-                    selectedColor: AppColors.primary.withOpacity(0.2),
+                    selectedColor: context.colors.primary.withOpacity(0.2),
                     labelStyle: TextStyle(
-                      color: _isWeekly ? AppColors.primary : AppColors.textSecondary,
+                      color: _isWeekly ? context.colors.primary : context.colors.textSecondary,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -65,9 +65,9 @@ class _HabitCompletionChartState extends State<HabitCompletionChart> {
                         _isWeekly = false;
                       });
                     },
-                    selectedColor: AppColors.primary.withOpacity(0.2),
+                    selectedColor: context.colors.primary.withOpacity(0.2),
                     labelStyle: TextStyle(
-                      color: !_isWeekly ? AppColors.primary : AppColors.textSecondary,
+                      color: !_isWeekly ? context.colors.primary : context.colors.textSecondary,
                     ),
                   ),
                 ],
@@ -80,11 +80,11 @@ class _HabitCompletionChartState extends State<HabitCompletionChart> {
                     lineTouchData: LineTouchData(
                       handleBuiltInTouches: true,
                       touchTooltipData: LineTouchTooltipData(
-                        getTooltipColor: (touchedSpot) => AppColors.surface, // Or Colors.white
+                        getTooltipColor: (touchedSpot) => context.colors.surface, // Or Colors.white
                         getTooltipItems: (spots) => spots.map((spot) {
                           return LineTooltipItem(
                             '${spot.y.toInt()}%',
-                            const TextStyle(color: AppColors.textPrimary),
+                            TextStyle(color: context.colors.textPrimary),
                           );
                         }).toList(),
                       ),
@@ -94,11 +94,11 @@ class _HabitCompletionChartState extends State<HabitCompletionChart> {
                       drawVerticalLine: true,
                       horizontalInterval: 20,
                       getDrawingHorizontalLine: (value) => FlLine(
-                        color: AppColors.textSecondary.withOpacity(0.1),
+                        color: context.colors.textSecondary.withOpacity(0.1),
                         strokeWidth: 1,
                       ),
                       getDrawingVerticalLine: (value) => FlLine(
-                        color: AppColors.textSecondary.withOpacity(0.1),
+                        color: context.colors.textSecondary.withOpacity(0.1),
                         strokeWidth: 1,
                       ),
                     ),
@@ -110,8 +110,8 @@ class _HabitCompletionChartState extends State<HabitCompletionChart> {
                           interval: 20,
                           getTitlesWidget: (value, meta) => Text(
                             '${value.toInt()}%',
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                            style: TextStyle(
+                              color: context.colors.textSecondary,
                               fontSize: 12,
                             ),
                           ),
@@ -123,8 +123,8 @@ class _HabitCompletionChartState extends State<HabitCompletionChart> {
                           interval: 1,
                           getTitlesWidget: (value, meta) => Text(
                             _isWeekly ? 'W${value.toInt() + 1}' : 'M${value.toInt() + 1}',
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                            style: TextStyle(
+                              color: context.colors.textSecondary,
                               fontSize: 12,
                             ),
                           ),
@@ -135,7 +135,7 @@ class _HabitCompletionChartState extends State<HabitCompletionChart> {
                     ),
                     borderData: FlBorderData(
                       show: true,
-                      border: Border.all(color: AppColors.textSecondary.withOpacity(0.2)),
+                      border: Border.all(color: context.colors.textSecondary.withOpacity(0.2)),
                     ),
                     minX: 0,
                     maxX: _isWeekly ? 6 : 5,
@@ -145,11 +145,11 @@ class _HabitCompletionChartState extends State<HabitCompletionChart> {
                       LineChartBarData(
                         spots: getChartData(widget.data, _isWeekly),
                         isCurved: true,
-                        color: AppColors.primary,
+                        color: context.colors.primary,
                         barWidth: 3,
                         belowBarData: BarAreaData(
                           show: true,
-                          color: AppColors.primary.withOpacity(0.15),
+                          color: context.colors.primary.withOpacity(0.15),
                         ),
                         dotData: const FlDotData(show: true),
                       ),

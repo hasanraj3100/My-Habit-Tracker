@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/habit_model.dart';
@@ -65,7 +66,7 @@ class _HabitCardState extends State<HabitCard> {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: context.colors.surfaceMuted,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -79,7 +80,7 @@ class _HabitCardState extends State<HabitCard> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
-                  color: AppColors.textSecondary.withOpacity(.6),
+                  color: context.colors.textSecondary.withOpacity(.6),
                   width: 1.4,
                 ),
                 color: done ? AppColors.success.withOpacity(.15) : Colors.transparent,
@@ -96,8 +97,8 @@ class _HabitCardState extends State<HabitCard> {
               children: [
                 Text(
                   habit.category,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: context.colors.textSecondary,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
@@ -106,7 +107,7 @@ class _HabitCardState extends State<HabitCard> {
                 Text(
                   habit.title,
                   style: TextStyle(
-                    color: AppColors.textPrimary,
+                    color: context.colors.textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     decoration: done ? TextDecoration.lineThrough : TextDecoration.none,
@@ -119,7 +120,7 @@ class _HabitCardState extends State<HabitCard> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
-                      color: AppColors.textSecondary.withOpacity(.6),
+                      color: context.colors.textSecondary.withOpacity(.6),
                       width: 1.4,
                     ),
                   ),
@@ -127,8 +128,8 @@ class _HabitCardState extends State<HabitCard> {
                     habit.frequency == "Weekly"
                         ? "Weekly (${_weekdayLabel(habit.weekdays)})"
                         : habit.frequency,
-                    style: const TextStyle(
-                      color: AppColors.textSecondary,
+                    style: TextStyle(
+                      color: context.colors.textSecondary,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
                     ),
@@ -142,16 +143,16 @@ class _HabitCardState extends State<HabitCard> {
             children: [
               Text(
                 "${habit.streak}",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
+                  color: context.colors.textPrimary,
                 ),
               ),
-              const Text(
+              Text(
                 "Streak",
                 style: TextStyle(
-                  color: AppColors.textSecondary,
+                  color: context.colors.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                 ),

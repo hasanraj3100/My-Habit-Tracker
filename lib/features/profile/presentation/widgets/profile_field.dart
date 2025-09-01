@@ -1,22 +1,27 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 
 class ProfileFields {
-  static TextFormField nicknameField(TextEditingController controller) {
+  static TextFormField nicknameField(
+      BuildContext context,
+      TextEditingController controller,
+      ) {
+    final colors = context.colors;
+
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
         labelText: "Nickname",
         prefixIcon: const Icon(Icons.person),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: colors.surface, // adaptive
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.surfaceMuted, width: 1),
+          borderSide: BorderSide(color: colors.surfaceMuted, width: 1),
         ),
       ),
       validator: (v) {
@@ -27,21 +32,23 @@ class ProfileFields {
     );
   }
 
-  static TextFormField emailField(String email) {
+  static TextFormField emailField(BuildContext context, String email) {
+    final colors = context.colors;
+
     return TextFormField(
       initialValue: email,
       decoration: InputDecoration(
         labelText: "Email",
         prefixIcon: const Icon(Icons.email),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: colors.surface, // adaptive
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.surfaceMuted, width: 1),
+          borderSide: BorderSide(color: colors.surfaceMuted, width: 1),
         ),
       ),
       readOnly: true,

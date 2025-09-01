@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import '../widgets/habit_calendar.dart';
 import '../widgets/habit_completion_chart.dart';
 import '../widgets/habit_delete_button.dart';
@@ -65,9 +65,9 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: context.colors.primary,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -81,9 +81,9 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data?.data() == null) {
-            return const Center(
+            return  Center(
                 child: Text('Habit not found',
-                    style: TextStyle(color: AppColors.textSecondary)));
+                    style: TextStyle(color: context.colors.textSecondary)));
           }
 
           final data = snapshot.data!.data()!;
@@ -126,20 +126,20 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Note',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                                  color: context.colors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 8),
                               Text(
                                 note,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
-                                  color: AppColors.textSecondary,
+                                  color: context.colors.textSecondary,
                                 ),
                               ),
                             ],

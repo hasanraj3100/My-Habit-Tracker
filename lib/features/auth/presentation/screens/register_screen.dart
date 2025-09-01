@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -106,7 +106,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -114,9 +114,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.only(top: 80, bottom: 60),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.primary, AppColors.secondary],
+                  colors: [context.colors.primary, context.colors.secondary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -246,7 +246,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       height: 50,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: context.colors.primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),

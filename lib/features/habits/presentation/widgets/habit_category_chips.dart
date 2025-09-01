@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../providers/habit_provider.dart';
 
 class HabitCategoryChips extends StatelessWidget {
@@ -78,16 +78,16 @@ class HabitCategoryChips extends StatelessWidget {
               }
             },
             labelStyle: TextStyle(
-              color: selected ? Colors.white : AppColors.textPrimary,
+              color: selected ? Colors.white : context.colors.textPrimary,
               fontWeight: FontWeight.w600,
             ),
-            backgroundColor: isAdd ? Colors.white : AppColors.surface,
-            selectedColor: AppColors.primary,
+            backgroundColor: isAdd ? Colors.white : context.colors.surface,
+            selectedColor: context.colors.primary,
             shape: StadiumBorder(
               side: BorderSide(
                 color: isAdd
-                    ? AppColors.textSecondary.withOpacity(.35)
-                    : AppColors.primary.withOpacity(.35),
+                    ? context.colors.textSecondary.withOpacity(.35)
+                    : context.colors.primary.withOpacity(.35),
                 width: 1.2,
               ),
             ),

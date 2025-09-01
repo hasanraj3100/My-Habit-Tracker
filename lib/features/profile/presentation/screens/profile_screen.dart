@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import 'package:intl/intl.dart';
-
 import '../../data/profile_repository.dart';
 import '../providers/profile_provider.dart';
 import '../widgets/profile_field.dart';
@@ -78,7 +76,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: context.colors.textPrimary,
                       ),
                     ),
                   ),
@@ -87,9 +85,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     key: _formKey,
                     child: Column(
                       children: [
-                        ProfileFields.nicknameField(p.nicknameController),
+                        ProfileFields.nicknameField(context, p.nicknameController),
                         const SizedBox(height: 16),
-                        ProfileFields.emailField(p.userData!['email'] ?? ''),
+                        ProfileFields.emailField(context, p.userData!['email'] ?? ''),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<String>(
                           value: p.selectedGender,
@@ -105,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide:
-                              BorderSide(color: AppColors.surfaceMuted, width: 1),
+                              BorderSide(color: context.colors.surfaceMuted, width: 1),
                             ),
                           ),
                           items: p.genderOptions
@@ -131,7 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide(
-                                  color: AppColors.surfaceMuted, width: 1),
+                                  color: context.colors.surfaceMuted, width: 1),
                             ),
                           ),
                           onTap: _pickDob,
@@ -159,7 +157,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide(
-                                  color: AppColors.surfaceMuted, width: 1),
+                                  color: context.colors.surfaceMuted, width: 1),
                             ),
                           ),
                           validator: (v) {
@@ -194,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             icon: const Icon(Icons.save),
                             label: const Text("Save Changes"),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
+                              backgroundColor: context.colors.primary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),

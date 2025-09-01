@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../data/models/habit_model.dart';
 import '../providers/habit_provider.dart';
 import '../screens/habit_details_screen.dart';
@@ -31,10 +31,10 @@ class HabitTaskList extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
               "No habits yet. Add one!",
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colors.textSecondary),
             ),
           );
         }

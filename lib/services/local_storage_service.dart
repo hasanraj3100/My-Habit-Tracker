@@ -40,4 +40,15 @@ class LocalStorageService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyUserData);
   }
+
+
+  Future<void> saveDarkMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', value);
+  }
+
+  Future<bool?> getDarkMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('isDarkMode');
+  }
 }

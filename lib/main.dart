@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:my_habit_tracker/core/providers/app_theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:my_habit_tracker/features/habits/presentation/providers/habit_provider.dart';
 import 'features/habits/presentation/providers/favourite_quote_provider.dart';
@@ -18,6 +19,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => HabitProvider()),
         ChangeNotifierProvider(create: (_) => QuoteProvider()..fetchQuotes()),
         ChangeNotifierProvider(create: (_) => FavouriteQuotesProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider())
       ],
       child: const MyApp(),
     ),

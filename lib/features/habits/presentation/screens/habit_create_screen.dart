@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 
 class HabitCreateScreen extends StatefulWidget {
   const HabitCreateScreen({super.key});
@@ -162,9 +162,9 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: context.colors.primary,
         foregroundColor: Colors.white,
         title: const Text("Add Habit"),
         elevation: 0,
@@ -275,7 +275,7 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
                   : ElevatedButton(
                 onPressed: _saveHabit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: context.colors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),

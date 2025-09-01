@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
-import '../../../../core/constants/app_colors.dart';
 import '../../../../services/local_storage_service.dart';
 import '../providers/habit_provider.dart';
 
@@ -86,7 +85,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
     final provider = Provider.of<HabitProvider>(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: Column(
         children: [
           Expanded(
@@ -99,12 +98,12 @@ class _HabitListScreenState extends State<HabitListScreen> {
                   const SizedBox(height: 18),
 
                   // ===== Categories =====
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       "Categories",
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: context.colors.textPrimary,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                       ),
@@ -138,10 +137,10 @@ class _HabitListScreenState extends State<HabitListScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           "Ongoing Tasks",
                           style: TextStyle(
-                            color: AppColors.textPrimary,
+                            color: context.colors.textPrimary,
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                           ),
@@ -149,7 +148,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
                         IconButton(
                           icon: Icon(
                             _sortFinishedBottom ? Icons.sort_by_alpha : Icons.sort,
-                            color: AppColors.textSecondary,
+                            color: context.colors.textSecondary,
                           ),
                           onPressed: () => setState(() => _sortFinishedBottom = !_sortFinishedBottom),
                         ),

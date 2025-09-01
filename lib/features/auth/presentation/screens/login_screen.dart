@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../providers/auth_provider.dart';
 import 'register_screen.dart';
 
@@ -21,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -29,9 +29,9 @@ class _LoginScreenState extends State<LoginScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.only(top: 80, bottom: 60),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.primary, AppColors.secondary],
+                  colors: [context.colors.primary, context.colors.secondary],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -101,8 +101,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       _feedback!,
                       style: TextStyle(
                         color: _feedback == "Login successful!"
-                            ? AppColors.success
-                            : AppColors.error,
+                            ? context.colors.success
+                            : context.colors.error,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -113,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     height: 50,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: context.colors.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -169,10 +169,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       );
                     },
-                    child: const Text(
+                    child: Text(
                       "Don’t have an account? Register",
                       style: TextStyle(
-                        color: AppColors.textSecondary,
+                        color: context.colors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

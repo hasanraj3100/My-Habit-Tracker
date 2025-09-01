@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
 import 'package:my_habit_tracker/features/settings/presentation/screens/settings_screen.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../screens/habit_create_screen.dart';
 import '../screens/favourite_quote_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
@@ -50,7 +50,7 @@ class CustomNavBar extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         decoration: isAdd
             ? BoxDecoration(
-          color: AppColors.primary,
+          color: context.colors.primary,
           shape: BoxShape.circle,
         )
             : null,
@@ -58,7 +58,7 @@ class CustomNavBar extends StatelessWidget {
           icon,
           color: isAdd
               ? Colors.white
-              : (selected ? AppColors.secondary : Colors.white.withOpacity(.85)),
+              : (selected ? context.colors.secondary : Colors.white.withOpacity(.85)),
           size: isAdd ? 34 : (selected ? 28 : 24),
         ),
       ),
@@ -72,7 +72,7 @@ class CustomNavBar extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BottomAppBar(
-          color: AppColors.textPrimary.withOpacity(.9),
+          color: context.colors.textPrimary.withOpacity(.9),
           elevation: 8,
           child: SizedBox(
             height: 72,
