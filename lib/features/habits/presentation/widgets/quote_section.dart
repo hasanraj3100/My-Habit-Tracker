@@ -26,47 +26,80 @@ class QuoteSection extends StatelessWidget {
 
     return CarouselSlider(
       options: CarouselOptions(
-        height: 180,
+        height: 160,
         enlargeCenterPage: true,
         autoPlay: true,
+        viewportFraction: 0.85,
       ),
       items: quoteProvider.quotes.map((quote) {
         return Builder(
           builder: (context) {
-            return Card(
-              shape: RoundedRectangleBorder(
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 6),
+              decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
+                gradient: const LinearGradient(
+                  colors: [
+                    Colors.black54, // top semi-transparent
+                    Colors.black26, // middle fade
+                    Colors.transparent, // bottom transparent
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  ),
+                ],
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(
-                      child: Text(
-                        '"${quote.text}"',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
+                    // Author at top right
                     Align(
-                      alignment: Alignment.centerRight,
+                      alignment: Alignment.topRight,
                       child: Text(
                         '- ${quote.author}',
                         style: const TextStyle(
+                          color: Colors.white70,
                           fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
+                    // Quote text centered
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          '"${quote.text}"',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontStyle: FontStyle.italic,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black38,
+                                offset: Offset(1, 1),
+                                blurRadius: 2,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Buttons at bottom
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.copy, size: 20),
+                          icon: const Icon(Icons.copy, size: 20, color: Colors.white),
                           onPressed: () {
                             Clipboard.setData(
                               ClipboardData(
@@ -79,7 +112,7 @@ class QuoteSection extends StatelessWidget {
                           },
                         ),
                         IconButton(
-                          icon: const Icon(Icons.favorite_border, size: 20),
+                          icon: const Icon(Icons.favorite_border, size: 20, color: Colors.white),
                           onPressed: () async {
                             try {
                               await Provider.of<FavouriteQuotesProvider>(context, listen: false)
@@ -95,7 +128,6 @@ class QuoteSection extends StatelessWidget {
                             }
                           },
                         ),
-
                       ],
                     ),
                   ],
