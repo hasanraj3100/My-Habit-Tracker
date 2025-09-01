@@ -117,7 +117,7 @@ class _HabitCardState extends State<HabitCard> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.colors.background,
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
                       color: context.colors.textSecondary.withOpacity(.6),
@@ -130,6 +130,7 @@ class _HabitCardState extends State<HabitCard> {
                         : habit.frequency,
                     style: TextStyle(
                       color: context.colors.textSecondary,
+                      backgroundColor: context.colors.background,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
                     ),
