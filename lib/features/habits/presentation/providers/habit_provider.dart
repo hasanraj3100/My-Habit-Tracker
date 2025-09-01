@@ -58,15 +58,12 @@ class HabitProvider with ChangeNotifier {
 
   // Update an existing habit
   Future<void> updateHabit(HabitModel habit) async {
-    _setLoading(true);
     try {
       await _repository.updateHabit(habit);
       _error = null;
     } catch (e) {
       _error = e.toString();
     }
-    _setLoading(false);
-    notifyListeners();
   }
 
   // Delete a habit
@@ -145,7 +142,6 @@ class HabitProvider with ChangeNotifier {
 
   // Toggle habit completion for today
   Future<void> toggleHabit(HabitModel habit) async {
-    _setLoading(true);
     try {
       final updatedHistory = List<String>.from(habit.history);
       final today = DateFormat("yyyy-MM-dd").format(DateTime.now());
@@ -161,14 +157,10 @@ class HabitProvider with ChangeNotifier {
         streak: streak,
         maxStreak: newMaxStreak,
       );
-      await updateHabit(updatedHabit);
-      _error = null;
+      await updateHabit(updatedHabit); // silently update DB
     } catch (e) {
       _error = e.toString();
       rethrow;
-    } finally {
-      _setLoading(false);
-      notifyListeners();
     }
   }
 
