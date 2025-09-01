@@ -118,10 +118,21 @@ class _HabitListScreenState extends State<HabitListScreen> {
     }
   }
 
-  Widget _navItem({required IconData icon, required int index}) {
+  Widget _navItem({
+    required IconData icon,
+    required int index,
+    bool isAdd = false,
+  }) {
     final selected = _navIndex == index;
-    return IconButton(
-      onPressed: () {
+    return GestureDetector(
+      onTap: () async {
+        if (isAdd) {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const HabitCreateScreen()),
+          );
+          return;
+        }
         if (index == 4) {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
           return;
@@ -131,10 +142,23 @@ class _HabitListScreenState extends State<HabitListScreen> {
         }
         setState(() => _navIndex = index);
       },
-      icon: Icon(
-        icon,
-        color: selected ? AppColors.secondary : Colors.white.withOpacity(.85),
-        size: selected ? 28 : 24,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: isAdd
+            ? BoxDecoration(
+          color: AppColors.primary,
+          shape: BoxShape.circle,
+        )
+            : null,
+        child: Icon(
+          icon,
+          color: isAdd
+              ? Colors.white
+              : (selected ? AppColors.secondary : Colors.white.withOpacity(.85)),
+          size: isAdd
+              ? 34
+              : (selected ? 28 : 24),
+        ),
       ),
     );
   }
@@ -369,23 +393,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
           ),
         ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: SizedBox(
-        height: 68,
-        width: 68,
-        child: FloatingActionButton(
-          heroTag: 'fab_add_habit',
-          onPressed: () async {
-            await Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const HabitCreateScreen()),
-            );
-          },
-          backgroundColor: AppColors.primary,
-          elevation: 8,
-          child: const Icon(Icons.add, size: 34, color: Colors.white),
-        ),
-      ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: ClipRRect(
@@ -393,16 +400,14 @@ class _HabitListScreenState extends State<HabitListScreen> {
           child: BottomAppBar(
             color: AppColors.textPrimary.withOpacity(.9),
             elevation: 8,
-            shape: const CircularNotchedRectangle(),
-            notchMargin: 8,
             child: SizedBox(
-              height: 68,
+              height: 72,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _navItem(icon: Icons.home_rounded, index: 0),
                   _navItem(icon: Icons.favorite_border_rounded, index: 1),
-                  const SizedBox(width: 48),
+                  _navItem(icon: Icons.add, index: 2, isAdd: true),
                   _navItem(icon: Icons.settings_rounded, index: 3),
                   _navItem(icon: Icons.person_rounded, index: 4),
                 ],
@@ -484,8 +489,7 @@ class _HabitCardState extends State<_HabitCard> {
               height: 26,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
-                border:
-                Border.all(color: AppColors.textSecondary.withOpacity(.6), width: 1.4),
+                border: Border.all(color: AppColors.textSecondary.withOpacity(.6), width: 1.4),
                 color: done ? AppColors.success.withOpacity(.15) : Colors.transparent,
               ),
               child: done
@@ -522,8 +526,7 @@ class _HabitCardState extends State<_HabitCard> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                        color: AppColors.textSecondary.withOpacity(.6), width: 1.4),
+                    border: Border.all(color: AppColors.textSecondary.withOpacity(.6), width: 1.4),
                   ),
                   child: Text(
                     habit.frequency == "Weekly"
