@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:my_habit_tracker/features/habits/presentation/screens/favourite_quote_screen.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/services.dart'; // ✅ for Clipboard
+import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../services/local_storage_service.dart';
 import '../../data/models/habit_model.dart';
 import '../providers/habit_provider.dart';
 import '../widgets/quote_section.dart';
@@ -23,6 +26,9 @@ class _HabitListScreenState extends State<HabitListScreen> {
   bool _sortFinishedBottom = false;
   String _selectedCategoryFilter = "";
 
+  Map<String, dynamic>? _userData;
+  bool _loading = true;
+
   String _todayKey() => DateFormat("yyyy-MM-dd").format(DateTime.now());
   int _todayWeekday() => DateTime.now().weekday;
 
@@ -32,6 +38,46 @@ class _HabitListScreenState extends State<HabitListScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<HabitProvider>(context, listen: false).loadCategories();
     });
+
+    _loadFromCacheOrFirestore();
+  }
+
+  Future<void> _loadFromCacheOrFirestore() async {
+    final cachedData = await LocalStorageService.getUserData();
+    if (cachedData != null) {
+      setState(() {
+        _userData = cachedData;
+        _loading = false;
+      });
+    } else {
+      await _fetchFromFirestore();
+    }
+  }
+
+  Future<void> _fetchFromFirestore() async {
+    try {
+      final userId = FirebaseAuth.instance.currentUser?.uid;
+      if (userId == null) return;
+
+      final doc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      if (doc.exists) {
+        final data = doc.data()!;
+        setState(() {
+          _userData = data;
+          _loading = false;
+        });
+        await LocalStorageService.saveUserData(data);
+      } else {
+        setState(() {
+          _userData = null;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+    }
   }
 
   // ---------------- QUOTE SECTION ----------------
@@ -79,8 +125,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
         if (index == 4) {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
           return;
-        }
-        else if (index == 1) {
+        } else if (index == 1) {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const FavouriteQuotesPage()));
           return;
         }
@@ -138,11 +183,11 @@ class _HabitListScreenState extends State<HabitListScreen> {
                                 const SizedBox(width: 12),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
-                                    Text("Hello,", style: TextStyle(color: Colors.white, fontSize: 14)),
+                                  children: [
+                                    const Text("Hello,", style: TextStyle(color: Colors.white, fontSize: 14)),
                                     Text(
-                                      "Tony Stark",
-                                      style: TextStyle(
+                                      _loading ? "..." : (_userData?['nickname'] ?? "User"),
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 18,
                                         fontWeight: FontWeight.w700,
@@ -162,7 +207,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
                           ],
                         ),
                         const SizedBox(height: 28),
-                        // ✅ Quotes carousel instead of static text
                         _quoteSection(),
                       ],
                     ),
