@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:my_habit_tracker/features/habits/presentation/screens/favourite_quote_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart'; // ✅ for Clipboard
 import '../../../../core/constants/app_colors.dart';
@@ -77,6 +78,10 @@ class _HabitListScreenState extends State<HabitListScreen> {
       onPressed: () {
         if (index == 4) {
           Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
+          return;
+        }
+        else if (index == 1) {
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const FavouriteQuotesPage()));
           return;
         }
         setState(() => _navIndex = index);
