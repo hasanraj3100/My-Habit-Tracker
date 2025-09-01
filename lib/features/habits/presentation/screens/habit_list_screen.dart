@@ -21,11 +21,9 @@ class _HabitListScreenState extends State<HabitListScreen> {
   String _todayKey() => DateFormat("yyyy-MM-dd").format(DateTime.now());
 
   int _todayWeekday() {
-    // Sunday = 7 in Dart, but we’ll normalize to 0–6
-    final weekday = DateTime.now().weekday; // Monday=1 ... Sunday=7
-    return weekday % 7; // → 0=Sunday, 1=Monday, ... 6=Saturday
+    // Dart: Monday=1, ..., Sunday=7
+    return DateTime.now().weekday;
   }
-
 
   // Stream of habit documents for current user
   Stream<QuerySnapshot<Map<String, dynamic>>> _habitsStream() {
@@ -64,7 +62,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
     final history = List<String>.from(data['history'] ?? []);
     return history.contains(_todayKey());
   }
-
 
   int _calculateStreak(List<String> history, String frequency, List<dynamic> weekdays) {
     if (history.isEmpty) return 0;
@@ -300,8 +297,15 @@ class _HabitListScreenState extends State<HabitListScreen> {
                     });
                   }
 
+                  final todayWeekday = _todayWeekday();
                   return Column(
-                    children: docs.map((doc) {
+                    children: docs.where((doc) {
+                      final data = doc.data();
+                      final frequency = data['frequency'] ?? '';
+                      final weekdays = List<int>.from(data['weekdays'] ?? []);
+                      // Show daily habits or weekly habits where today is a scheduled day
+                      return frequency == 'Daily' || (frequency == 'Weekly' && weekdays.contains(todayWeekday));
+                    }).map((doc) {
                       final data = doc.data();
                       final done = _isDoneToday(data);
 
@@ -316,7 +320,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
                       );
                     }).toList(),
                   );
-
                 },
               ),
             ),
