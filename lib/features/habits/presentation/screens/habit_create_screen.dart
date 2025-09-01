@@ -17,7 +17,7 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
 
   String _selectedCategory = "Health";
   String _selectedFrequency = "Daily"; // "Daily" | "Weekly"
-  int? _selectedWeeklyDay; // 1 (Mon) .. 7 (Sun)
+  List<int> _selectedWeekdays = []; // multiple days
 
   bool _isSaving = false;
 
@@ -61,9 +61,7 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-              },
+              onPressed: () => Navigator.pop(ctx),
               child: const Text("Cancel"),
             ),
             TextButton(
@@ -88,9 +86,9 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
   Future<void> _saveHabit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (_selectedFrequency == "Weekly" && (_selectedWeeklyDay == null)) {
+    if (_selectedFrequency == "Weekly" && _selectedWeekdays.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please select the weekday for weekly habit.")),
+        const SnackBar(content: Text("Please select at least one weekday.")),
       );
       return;
     }
@@ -98,17 +96,15 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
     setState(() => _isSaving = true);
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        throw Exception("No logged in user");
-      }
+      if (user == null) throw Exception("No logged in user");
 
       final habitData = <String, dynamic>{
         "title": _titleController.text.trim(),
         "note": _noteController.text.trim(),
         "category": _selectedCategory,
         "frequency": _selectedFrequency,
-        "weeklyDay": _selectedFrequency == "Weekly" ? _selectedWeeklyDay : null,
-        "history": <Timestamp>[], // will store Timestamps of success dates
+        "weekdays": _selectedFrequency == "Weekly" ? _selectedWeekdays : [],
+        "history": <Timestamp>[],
         "streak": 0,
         "isDone": false,
         "createdAt": FieldValue.serverTimestamp(),
@@ -159,7 +155,8 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
                   labelText: "Habit Title",
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                validator: (value) => (value == null || value.trim().isEmpty) ? "Please enter a title" : null,
+                validator: (value) =>
+                (value == null || value.trim().isEmpty) ? "Please enter a title" : null,
               ),
               const SizedBox(height: 14),
 
@@ -179,7 +176,9 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
               // Category Dropdown
               DropdownButtonFormField<String>(
                 value: _selectedCategory,
-                items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                items: _categories
+                    .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                    .toList(),
                 onChanged: (value) {
                   if (value == null) return;
                   if (value == "Add New") {
@@ -198,12 +197,14 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
               // Frequency Dropdown
               DropdownButtonFormField<String>(
                 value: _selectedFrequency,
-                items: ["Daily", "Weekly"].map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
+                items: ["Daily", "Weekly"]
+                    .map((f) => DropdownMenuItem(value: f, child: Text(f)))
+                    .toList(),
                 onChanged: (value) {
                   if (value == null) return;
                   setState(() {
                     _selectedFrequency = value;
-                    if (_selectedFrequency != "Weekly") _selectedWeeklyDay = null;
+                    if (_selectedFrequency != "Weekly") _selectedWeekdays = [];
                   });
                 },
                 decoration: InputDecoration(
@@ -213,24 +214,29 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
               ),
               const SizedBox(height: 12),
 
-              // If Weekly, show weekday selector
+              // If Weekly, show multi-day selector
               if (_selectedFrequency == "Weekly") ...[
-                DropdownButtonFormField<int>(
-                  value: _selectedWeeklyDay,
-                  items: _weekdays.entries
-                      .map((e) => DropdownMenuItem(value: e.key, child: Text(e.value)))
-                      .toList(),
-                  onChanged: (value) => setState(() => _selectedWeeklyDay = value),
-                  validator: (v) {
-                    if (_selectedFrequency == "Weekly" && v == null) {
-                      return "Select a day of week";
-                    }
-                    return null;
-                  },
-                  decoration: InputDecoration(
-                    labelText: "Day of Week",
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+                const Text("Select weekdays:",
+                    style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: _weekdays.entries.map((entry) {
+                    final isSelected = _selectedWeekdays.contains(entry.key);
+                    return FilterChip(
+                      label: Text(entry.value),
+                      selected: isSelected,
+                      onSelected: (bool selected) {
+                        setState(() {
+                          if (selected) {
+                            _selectedWeekdays.add(entry.key);
+                          } else {
+                            _selectedWeekdays.remove(entry.key);
+                          }
+                        });
+                      },
+                    );
+                  }).toList(),
                 ),
                 const SizedBox(height: 12),
               ],
@@ -245,7 +251,9 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 child: const Text(
                   "Save Habit",

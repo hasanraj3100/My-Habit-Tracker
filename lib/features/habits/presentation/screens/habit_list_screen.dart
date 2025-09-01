@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'habit_create_screen.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
@@ -15,14 +16,22 @@ class HabitListScreen extends StatefulWidget {
 class _HabitListScreenState extends State<HabitListScreen> {
   final List<String> _categories = ["Study", "Health", "Work", "Personal", "+ Add Category"];
   int _navIndex = 0;
+  bool _sortFinishedBottom = false;
+
+  String _todayKey() => DateFormat("yyyy-MM-dd").format(DateTime.now());
+
+  int _todayWeekday() {
+    // Sunday = 7 in Dart, but we’ll normalize to 0–6
+    final weekday = DateTime.now().weekday; // Monday=1 ... Sunday=7
+    return weekday % 7; // → 0=Sunday, 1=Monday, ... 6=Saturday
+  }
+
 
   // Stream of habit documents for current user
   Stream<QuerySnapshot<Map<String, dynamic>>> _habitsStream() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      // empty stream if not logged in
-      return const Stream.empty() as Stream<QuerySnapshot<Map<String, dynamic>>>;
-    }
+    if (user == null) return const Stream.empty() as Stream<QuerySnapshot<Map<String, dynamic>>>;
+
     return FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
@@ -31,27 +40,80 @@ class _HabitListScreenState extends State<HabitListScreen> {
         .snapshots();
   }
 
-  Future<void> _toggleHabit(DocumentReference docRef, bool currentStatus) async {
-    try {
-      await docRef.update({'isDone': !currentStatus});
-    } catch (e) {
-      // Optionally show an error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not update habit: $e')),
-      );
+  Future<void> _toggleHabit(DocumentReference docRef, Map<String, dynamic> data) async {
+    final history = List<String>.from(data['history'] ?? []);
+    final today = _todayKey();
+
+    if (history.contains(today)) {
+      // Uncheck → remove today
+      history.remove(today);
+    } else {
+      // Check → add today
+      history.add(today);
     }
+
+    final streak = _calculateStreak(history, data['frequency'], data['weekdays'] ?? []);
+
+    await docRef.update({
+      'history': history,
+      'streak': streak,
+    });
+  }
+
+  bool _isDoneToday(Map<String, dynamic> data) {
+    final history = List<String>.from(data['history'] ?? []);
+    return history.contains(_todayKey());
+  }
+
+
+  int _calculateStreak(List<String> history, String frequency, List<dynamic> weekdays) {
+    if (history.isEmpty) return 0;
+
+    history.sort((a, b) => b.compareTo(a)); // latest first
+    final parsed = history.map((d) => DateTime.parse(d)).toList();
+
+    int streak = 0;
+    DateTime today = DateTime.now();
+
+    if (frequency == "Daily") {
+      DateTime check = today;
+      for (var date in parsed) {
+        if (date.year == check.year && date.month == check.month && date.day == check.day) {
+          streak++;
+          check = check.subtract(const Duration(days: 1));
+        } else {
+          break;
+        }
+      }
+    } else if (frequency == "Weekly") {
+      // check streak by week/day match
+      DateTime check = today;
+      while (true) {
+        if (weekdays.contains(check.weekday)) {
+          bool matched = parsed.any((d) =>
+          d.year == check.year && d.month == check.month && d.day == check.day);
+          if (matched) {
+            streak++;
+            check = check.subtract(const Duration(days: 7));
+          } else {
+            break;
+          }
+        } else {
+          check = check.subtract(const Duration(days: 1));
+          if (check.isBefore(parsed.last)) break;
+        }
+      }
+    }
+
+    return streak;
   }
 
   Widget _navItem({required IconData icon, required int index}) {
     final selected = _navIndex == index;
     return IconButton(
       onPressed: () {
-        // profile (index 4) should navigate to ProfileScreen
         if (index == 4) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const ProfileScreen()),
-          );
+          Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
           return;
         }
         setState(() => _navIndex = index);
@@ -73,17 +135,17 @@ class _HabitListScreenState extends State<HabitListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ===== Header + Quote (ONLY this has the background image) =====
+            // ===== Header + Quote =====
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 20 + 24, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 44, 16, 24),
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(28),
                   bottomRight: Radius.circular(28),
                 ),
                 image: const DecorationImage(
-                  image: AssetImage("assets/images/header_bg.jpg"), // add to pubspec
+                  image: AssetImage("assets/images/header_bg.jpg"),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -105,14 +167,11 @@ class _HabitListScreenState extends State<HabitListScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: const [
                               Text("Hello,", style: TextStyle(color: Colors.white, fontSize: 14)),
-                              Text(
-                                "Tony Stark",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                              Text("Tony Stark",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700)),
                             ],
                           ),
                         ],
@@ -127,17 +186,15 @@ class _HabitListScreenState extends State<HabitListScreen> {
                     ],
                   ),
                   const SizedBox(height: 28),
-                  // quote
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
                       "We are what we repeatedly do.\nExcellence, then, is not an act,\nbut a habit.",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(.95),
-                        fontSize: 20,
-                        height: 1.35,
-                        fontWeight: FontWeight.w700,
-                      ),
+                          color: Colors.white.withOpacity(.95),
+                          fontSize: 20,
+                          height: 1.35,
+                          fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
@@ -149,14 +206,11 @@ class _HabitListScreenState extends State<HabitListScreen> {
             // ===== Categories =====
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                "Categories",
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              child: Text("Categories",
+                  style: TextStyle(
+                      color: AppColors.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700)),
             ),
             const SizedBox(height: 10),
             SizedBox(
@@ -171,23 +225,19 @@ class _HabitListScreenState extends State<HabitListScreen> {
                     selected: false,
                     onSelected: (_) {
                       if (isAdd) {
-                        // TODO: Add category action (dialog)
+                        // TODO: Add category
                       }
                     },
-                    labelStyle: TextStyle(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    labelStyle: const TextStyle(
+                        color: AppColors.textPrimary, fontWeight: FontWeight.w600),
                     backgroundColor: isAdd ? Colors.white : AppColors.surface,
                     shape: StadiumBorder(
                       side: BorderSide(
-                        color: isAdd
-                            ? AppColors.textSecondary.withOpacity(.35)
-                            : AppColors.primary.withOpacity(.35),
-                        width: 1.2,
-                      ),
+                          color: isAdd
+                              ? AppColors.textSecondary.withOpacity(.35)
+                              : AppColors.primary.withOpacity(.35),
+                          width: 1.2),
                     ),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   );
                 },
                 separatorBuilder: (_, __) => const SizedBox(width: 10),
@@ -198,20 +248,29 @@ class _HabitListScreenState extends State<HabitListScreen> {
             const SizedBox(height: 24),
 
             // ===== Ongoing Tasks =====
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                "Ongoing Tasks",
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Ongoing Tasks",
+                      style: TextStyle(
+                          color: AppColors.textPrimary,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700)),
+                  IconButton(
+                    icon: Icon(
+                        _sortFinishedBottom ? Icons.sort_by_alpha : Icons.sort,
+                        color: AppColors.textSecondary),
+                    onPressed: () =>
+                        setState(() => _sortFinishedBottom = !_sortFinishedBottom),
+                  )
+                ],
               ),
             ),
             const SizedBox(height: 12),
 
-            // habit cards area - StreamBuilder to load from Firestore
+            // habits list
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -219,53 +278,54 @@ class _HabitListScreenState extends State<HabitListScreen> {
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(child: CircularProgressIndicator()));
                   }
-
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Text(
-                          "No habits yet. Add one!",
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
-                      ),
-                    );
+                    return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(
+                            child: Text("No habits yet. Add one!",
+                                style: TextStyle(color: AppColors.textSecondary))));
                   }
 
-                  final docs = snapshot.data!.docs;
+                  var docs = snapshot.data!.docs;
+
+                  if (_sortFinishedBottom) {
+                    docs.sort((a, b) {
+                      final aDone = _isDoneToday(a.data());
+                      final bDone = _isDoneToday(b.data());
+                      if (aDone == bDone) return 0;
+                      return aDone ? 1 : -1;
+                    });
+                  }
+
                   return Column(
                     children: docs.map((doc) {
                       final data = doc.data();
-                      final title = data['title'] ?? 'Untitled';
-                      final category = data['category'] ?? '';
-                      final frequency = data['frequency'] ?? '';
-                      final streak = (data['streak'] is int) ? data['streak'] as int : (data['streak'] is num ? (data['streak'] as num).toInt() : 0);
-                      final done = data['isDone'] == true;
+                      final done = _isDoneToday(data);
 
                       return _HabitCard(
-                        title: title,
-                        category: category,
-                        frequency: frequency,
-                        streak: streak,
+                        title: data['title'] ?? 'Untitled',
+                        category: data['category'] ?? '',
+                        frequency: data['frequency'] ?? '',
+                        weekdays: List<int>.from(data['weekdays'] ?? []),
+                        streak: (data['streak'] is int) ? data['streak'] : 0,
                         done: done,
-                        onToggle: () => _toggleHabit(doc.reference, done),
+                        onToggle: () => _toggleHabit(doc.reference, data),
                       );
                     }).toList(),
                   );
+
                 },
               ),
             ),
 
-            const SizedBox(height: 96), // bottom padding so list doesn't hide behind nav
+            const SizedBox(height: 96),
           ],
         ),
       ),
 
-      // ===== Center big ADD button (highlighted & lifted) =====
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: SizedBox(
         height: 68,
@@ -284,7 +344,6 @@ class _HabitListScreenState extends State<HabitListScreen> {
         ),
       ),
 
-      // ===== Floating bottom nav with 5 destinations (center notch) =====
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         child: ClipRRect(
@@ -301,7 +360,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
                 children: [
                   _navItem(icon: Icons.home_rounded, index: 0),
                   _navItem(icon: Icons.favorite_border_rounded, index: 1),
-                  const SizedBox(width: 48), // space for the notch/FAB
+                  const SizedBox(width: 48),
                   _navItem(icon: Icons.settings_rounded, index: 3),
                   _navItem(icon: Icons.person_rounded, index: 4),
                 ],
@@ -319,7 +378,8 @@ class _HabitListScreenState extends State<HabitListScreen> {
 class _HabitCard extends StatelessWidget {
   final String title;
   final String category;
-  final String frequency; // "Daily" | "Weekly"
+  final String frequency;
+  final List<int> weekdays;
   final int streak;
   final bool done;
   final VoidCallback onToggle;
@@ -328,10 +388,17 @@ class _HabitCard extends StatelessWidget {
     required this.title,
     required this.category,
     required this.frequency,
+    required this.weekdays,
     required this.streak,
     required this.done,
     required this.onToggle,
   });
+
+  String _weekdayLabel(List<int> days) {
+    if (days.isEmpty) return "";
+    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    return days.map((d) => labels[d - 1]).join(", ");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -344,7 +411,6 @@ class _HabitCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // checkbox
           InkWell(
             onTap: onToggle,
             borderRadius: BorderRadius.circular(6),
@@ -363,33 +429,25 @@ class _HabitCard extends StatelessWidget {
           ),
           const SizedBox(width: 12),
 
-          // title + meta
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // category label
-                Text(
-                  category,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
+                Text(category,
+                    style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12)),
                 const SizedBox(height: 4),
-                // title
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    decoration: done ? TextDecoration.lineThrough : TextDecoration.none,
-                  ),
-                ),
+                Text(title,
+                    style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        decoration: done
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none)),
                 const SizedBox(height: 8),
-                // frequency pill
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
@@ -398,38 +456,32 @@ class _HabitCard extends StatelessWidget {
                     border: Border.all(color: AppColors.textSecondary.withOpacity(.25)),
                   ),
                   child: Text(
-                    frequency,
+                    frequency == "Weekly"
+                        ? "Weekly (${_weekdayLabel(weekdays)})"
+                        : frequency,
                     style: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12),
                   ),
                 ),
               ],
             ),
           ),
 
-          // streak at right
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                "$streak",
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const Text(
-                "Streak",
-                style: TextStyle(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
-              ),
+              Text("$streak",
+                  style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textPrimary)),
+              const Text("Streak",
+                  style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12)),
             ],
           ),
         ],
@@ -438,7 +490,6 @@ class _HabitCard extends StatelessWidget {
   }
 }
 
-// round translucent icon button for header
 Widget _roundIconButton(IconData icon, {required VoidCallback onPressed}) {
   return Material(
     color: Colors.white.withOpacity(.25),
