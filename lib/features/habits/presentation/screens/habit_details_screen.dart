@@ -20,17 +20,39 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
 
   String _todayKey() => DateFormat("yyyy-MM-dd").format(DateTime.now());
 
-  Future<Map<String, dynamic>?> _fetchHabit() async {
+  Stream<DocumentSnapshot<Map<String, dynamic>>> _habitStream() {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return null;
-
-    final doc = await FirebaseFirestore.instance
+    if (user == null) {
+      return const Stream.empty() as Stream<DocumentSnapshot<Map<String, dynamic>>>;
+    }
+    return FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
         .collection('habits')
         .doc(widget.habitId)
-        .get();
-    return doc.data();
+        .snapshots();
+  }
+
+  Future<void> _updateMaxStreak() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final docRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('habits')
+        .doc(widget.habitId);
+
+    final doc = await docRef.get();
+    final data = doc.data();
+    if (data == null) return;
+
+    final streak = (data['streak'] is int) ? data['streak'] : 0;
+    final maxStreak = (data['maxStreak'] is int) ? data['maxStreak'] : 0;
+
+    if (streak > maxStreak) {
+      await docRef.update({'maxStreak': streak});
+    }
   }
 
   Future<void> _toggleHabit(DocumentReference docRef, Map<String, dynamic> data) async {
@@ -100,13 +122,29 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
     return history.contains(_todayKey());
   }
 
-  Map<DateTime, bool> _getCalendarEvents(List<String> history, String frequency, List<int> weekdays) {
+  Map<DateTime, bool> _getCalendarEvents(List<String> history) {
     final events = <DateTime, bool>{};
     for (var dateStr in history) {
       final date = DateTime.parse(dateStr);
       events[DateTime(date.year, date.month, date.day)] = true;
     }
     return events;
+  }
+
+  List<DateTime> _getMissedDays(List<String> history, String frequency, List<int> weekdays) {
+    final missedDays = <DateTime>[];
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final start = today.subtract(const Duration(days: 365));
+
+    for (var date = start; date.isBefore(today); date = date.add(const Duration(days: 1))) {
+      final dateKey = DateFormat("yyyy-MM-dd").format(date);
+      final isExpected = frequency == 'Daily' || (frequency == 'Weekly' && weekdays.contains(date.weekday));
+      if (isExpected && !history.contains(dateKey)) {
+        missedDays.add(DateTime(date.year, date.month, date.day));
+      }
+    }
+    return missedDays;
   }
 
   List<FlSpot> _getChartData(Map<String, dynamic> data, bool isWeekly) {
@@ -161,6 +199,13 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Update maxStreak when the screen is opened
+    _updateMaxStreak();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -172,19 +217,20 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: FutureBuilder<Map<String, dynamic>?>(
-        future: _fetchHabit(),
+      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+        stream: _habitStream(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data == null) {
+          if (!snapshot.hasData || snapshot.data?.data() == null) {
             return const Center(child: Text('Habit not found', style: TextStyle(color: AppColors.textSecondary)));
           }
 
-          final data = snapshot.data!;
+          final data = snapshot.data!.data()!;
           final done = _isDoneToday(data);
-          final events = _getCalendarEvents(List<String>.from(data['history'] ?? []), data['frequency'] ?? 'Daily', List<int>.from(data['weekdays'] ?? []));
+          final events = _getCalendarEvents(List<String>.from(data['history'] ?? []));
+          final missedDays = _getMissedDays(List<String>.from(data['history'] ?? []), data['frequency'] ?? 'Daily', List<int>.from(data['weekdays'] ?? []));
           final frequency = data['frequency'] ?? 'Daily';
           final weekdays = List<int>.from(data['weekdays'] ?? []);
 
@@ -335,29 +381,33 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
                       calendarBuilders: CalendarBuilders(
                         markerBuilder: (context, date, _) {
                           final dateKey = DateTime(date.year, date.month, date.day);
+                          final isToday = dateKey.isAtSameMomentAs(DateTime.now().copyWith(hour: 0, minute: 0, second: 0, millisecond: 0));
                           if (frequency == 'Weekly' && !weekdays.contains(date.weekday)) {
                             return null; // Don't show markers for non-scheduled days
                           }
                           if (events.containsKey(dateKey)) {
                             return Container(
-                              margin: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
+                              margin: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: AppColors.success,
+                                border: Border.all(color: AppColors.success.withOpacity(0.8), width: 2),
                               ),
-                              width: 8,
-                              height: 8,
+                              width: 12,
+                              height: 12,
                             );
                           }
-                          return Container(
-                            margin: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: AppColors.textSecondary.withOpacity(0.3),
-                            ),
-                            width: 8,
-                            height: 8,
-                          );
+                          if (missedDays.contains(dateKey) && !isToday) {
+                            return Container(
+                              margin: const EdgeInsets.all(2),
+                              child: Icon(
+                                Icons.close,
+                                color: Colors.redAccent,
+                                size: 16,
+                              ),
+                            );
+                          }
+                          return null;
                         },
                       ),
                     ),

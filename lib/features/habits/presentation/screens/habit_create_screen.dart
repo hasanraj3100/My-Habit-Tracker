@@ -106,7 +106,7 @@ class _HabitCreateScreenState extends State<HabitCreateScreen> {
         "weekdays": _selectedFrequency == "Weekly" ? _selectedWeekdays : [],
         "history": <Timestamp>[],
         "streak": 0,
-        "isDone": false,
+        "maxStreak": 0,
         "createdAt": FieldValue.serverTimestamp(),
       };
 
