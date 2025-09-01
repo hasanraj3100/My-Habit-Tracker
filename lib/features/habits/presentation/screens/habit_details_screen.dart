@@ -19,7 +19,6 @@ class HabitDetailsScreen extends StatefulWidget {
 }
 
 class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
-  bool _isChartWeekly = false;
 
   @override
   void initState() {
@@ -157,8 +156,6 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
                     const SizedBox(height: 24),
                     HabitCompletionChart(
                       data: data,
-                      isWeekly: _isChartWeekly,
-                      onToggle: (weekly) => setState(() => _isChartWeekly = weekly),
                     ),
                     const SizedBox(height: 100),
                   ],
