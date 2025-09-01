@@ -19,9 +19,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _userId;
   bool _saving = false;
 
-
   final _formKey = GlobalKey<FormState>();
-  final RegExp _timezoneRegex = RegExp(r'^[+-](0\d|1[0-4])$');
+  final RegExp _timezoneRegex = RegExp(r'^[+-](0\d|1[0-4]):[0-5]\d$');
 
   late TextEditingController _nicknameController;
   late TextEditingController _dobController;
@@ -145,15 +144,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-
-  Future<void> _onRefresh() async {
-    await _fetchFromFirestore();
-  }
-
   void _logout() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.signOut();
-    Navigator.of(context).pop(); // navigate back to login
+    Navigator.of(context).pop();
   }
 
   Future<void> _pickDob() async {
@@ -172,162 +166,221 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     if (_userId == null) {
-      return const Scaffold(
-        body: Center(child: Text("No user logged in")),
-      );
+      return const Scaffold(body: Center(child: Text("No user logged in")));
     }
 
     if (_loading && _userData == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_userData == null) {
-      return const Scaffold(
-        body: Center(child: Text("User data not found")),
-      );
+      return const Scaffold(body: Center(child: Text("User data not found")));
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Profile"),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _onRefresh,
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Nickname
-              TextFormField(
-                controller: _nicknameController,
-                decoration: const InputDecoration(
-                  labelText: "Nickname",
-                  border: OutlineInputBorder(),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // Simple Header
+            Center(
+              child: Text(
+                "My Profile",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
                 ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) {
-                      return "Enter nickname";
-                    }
-                    if (v.trim().length < 3) {
-                      return "Name must be at least 3 characters";
-                    }
-                    return null;
-                  },
               ),
-              const SizedBox(height: 12),
+            ),
+            const SizedBox(height: 24),
 
-              // Email (not editable)
-              TextFormField(
-                initialValue: _userData!['email'] ?? '',
-                decoration: const InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(),
-                ),
-                readOnly: true,
-              ),
-              const SizedBox(height: 12),
-
-              // Gender Dropdown
-              DropdownButtonFormField<String>(
-                value: _selectedGender,
-                decoration: const InputDecoration(
-                  labelText: "Gender",
-                  border: OutlineInputBorder(),
-                ),
-                items: _genderOptions
-                    .map((g) => DropdownMenuItem(value: g, child: Text(g)))
-                    .toList(),
-                onChanged: (value) {
-                  if (value != null) setState(() => _selectedGender = value);
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // DOB
-              TextFormField(
-                controller: _dobController,
-                decoration: const InputDecoration(
-                  labelText: "Date of Birth",
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.calendar_today),
-                ),
-                readOnly: true,
-                onTap: _pickDob,
-                validator: (v) {
-                  if (_selectedDob == null) return "Select date of birth";
-                  if (_selectedDob!.isAfter(DateTime.now())) {
-                    return "Date of birth cannot be in the future";
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-
-              // Timezone
-              TextFormField(
-                controller: _timezoneController,
-                decoration: const InputDecoration(
-                  labelText: "Timezone (UTC±hh:mm)",
-                  hintText: "e.g., UTC+05:30",
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return null; // optional
-                  if (!_timezoneRegex.hasMatch(v.trim())) {
-                    return "Invalid timezone format";
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
-
-
-              // Save Button
-              _saving
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                onPressed: _saveProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  // Nickname
+                  TextFormField(
+                    controller: _nicknameController,
+                    decoration: InputDecoration(
+                      labelText: "Nickname",
+                      prefixIcon: const Icon(Icons.person),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide:
+                        BorderSide(color: AppColors.surfaceMuted, width: 1),
+                      ),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return "Enter nickname";
+                      if (v.trim().length < 3) return "Name must be at least 3 characters";
+                      return null;
+                    },
                   ),
-                ),
-                child: const Text(
-                  "Save Changes",
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
+                  const SizedBox(height: 16),
 
-              const SizedBox(height: 20),
-
-              // Logout Button
-              ElevatedButton(
-                onPressed: _logout,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  // Email (read-only)
+                  TextFormField(
+                    initialValue: _userData!['email'] ?? '',
+                    decoration: InputDecoration(
+                      labelText: "Email",
+                      prefixIcon: const Icon(Icons.email),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide:
+                        BorderSide(color: AppColors.surfaceMuted, width: 1),
+                      ),
+                    ),
+                    readOnly: true,
                   ),
-                ),
-                child: const Text(
-                  "Logout",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                  const SizedBox(height: 16),
+
+                  // Gender
+                  DropdownButtonFormField<String>(
+                    value: _selectedGender,
+                    decoration: InputDecoration(
+                      labelText: "Gender",
+                      prefixIcon: const Icon(Icons.transgender),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide:
+                        BorderSide(color: AppColors.surfaceMuted, width: 1),
+                      ),
+                    ),
+                    items: _genderOptions
+                        .map((g) => DropdownMenuItem(value: g, child: Text(g)))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) setState(() => _selectedGender = value);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Date of Birth
+                  TextFormField(
+                    controller: _dobController,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      labelText: "Date of Birth",
+                      prefixIcon: const Icon(Icons.calendar_today),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide:
+                        BorderSide(color: AppColors.surfaceMuted, width: 1),
+                      ),
+                    ),
+                    onTap: _pickDob,
+                    validator: (v) {
+                      if (_selectedDob == null) return "Select date of birth";
+                      if (_selectedDob!.isAfter(DateTime.now())) {
+                        return "Date of birth cannot be in the future";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Timezone
+                  TextFormField(
+                    controller: _timezoneController,
+                    decoration: InputDecoration(
+                      labelText: "Timezone (UTC±hh:mm)",
+                      hintText: "e.g., UTC+05:30",
+                      prefixIcon: const Icon(Icons.access_time),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide:
+                        BorderSide(color: AppColors.surfaceMuted, width: 1),
+                      ),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return null;
+                      if (!_timezoneRegex.hasMatch(v.trim())) {
+                        return "Invalid timezone format";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Save Button with icon
+                  _saving
+                      ? const Center(child: CircularProgressIndicator())
+                      : SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveProfile,
+                      icon: const Icon(Icons.save),
+                      label: const Text("Save Changes"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Logout Button with icon
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      onPressed: _logout,
+                      icon: const Icon(Icons.delete),
+                      label: const Text("Logout",
+                      style: TextStyle(
+                        color: Colors.white
+                      ),),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+                ],
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
