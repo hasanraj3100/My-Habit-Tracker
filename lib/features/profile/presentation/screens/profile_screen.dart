@@ -95,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             labelText: "Gender",
                             prefixIcon: const Icon(Icons.transgender),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: context.colors.background,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide.none,
@@ -121,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             labelText: "Date of Birth",
                             prefixIcon: const Icon(Icons.calendar_today),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: context.colors.background,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide.none,
@@ -149,7 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             hintText: "e.g., UTC+05:30",
                             prefixIcon: const Icon(Icons.access_time),
                             filled: true,
-                            fillColor: Colors.white,
+                            fillColor: context.colors.background,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                               borderSide: BorderSide.none,
