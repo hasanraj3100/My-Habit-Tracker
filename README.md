@@ -10,6 +10,7 @@ This app helps you build better routines, stay consistent, and stay motivated wi
 - **User Authentication**
   - Sign up, login, and logout with Firebase Authentication.
   - Securely store habits and personal data in Firestore.
+  - **Maintains login state and user information (name, email, date of birth, timezone) in shared preferences for faster loading.**
 
 - **Habit Management**
   - Add, edit, and delete habits easily.
@@ -60,7 +61,7 @@ This app helps you build better routines, stay consistent, and stay motivated wi
 - **Backend:** Firebase Firestore
 - **Authentication:** Firebase Auth
 - **State Management:** Provider
-- **Other Tools:** Intl, Cloud Firestore, Material Design
+- **Other Tools:** Intl, Cloud Firestore, Material Design, **Shared Preferences**
 
 ---
 
@@ -71,6 +72,7 @@ The app uses **Firebase Firestore** to store all user and habit-related data. Th
 - **User Information**
   - Stored under: `users/{userId}/`
   - Contains personal details like name, gender, birthday, timezone, and profile settings.
+  - **Login state and key user details are also cached locally using Shared Preferences to provide a faster, more seamless user experience on subsequent app launches.**
 
 - **Habits Information**
   - Stored under: `users/habits/{habitId}`
@@ -84,8 +86,7 @@ The app uses **Firebase Firestore** to store all user and habit-related data. Th
   - Stored under: `users/settings/preferences`
   - Maintains a **string array of categories**, including predefined ones and any custom categories added by the user.
 
-- **Favourite Quotes** 
-  - Stored under : `users/favourite_quotes`
+- **Favourite Quotes** - Stored under : `users/favourite_quotes`
   - Each quote contains: 
     - Author 
     - Text 
