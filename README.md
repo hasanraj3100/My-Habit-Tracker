@@ -1,6 +1,6 @@
 # 🌱 My Habit Tracker
 
-A simple yet powerful **habit tracking app** built with Flutter and Firebase.  
+A simple yet powerful **habit tracking app** built with Flutter and Firebase.
 This app helps you build better routines, stay consistent, and stay motivated with daily quotes.
 
 ---
@@ -84,6 +84,13 @@ The app uses **Firebase Firestore** to store all user and habit-related data. Th
   - Stored under: `users/settings/preferences`
   - Maintains a **string array of categories**, including predefined ones and any custom categories added by the user.
 
+- **Favourite Quotes** 
+  - Stored under : `users/favourite_quotes`
+  - Each quote contains: 
+    - Author 
+    - Text 
+    - CreateAt 
+
 This structure ensures easy retrieval and filtering of habits, efficient tracking of progress, and flexible category management.
 
 ---
@@ -93,23 +100,16 @@ This structure ensures easy retrieval and filtering of habits, efficient trackin
 Here are some screenshots from the app:
 
 ### Screenshots in Light Mode
-![Splash Screen](assets/images/screenshots/splash_screen.png)  
-![Login](assets/images/screenshots/login.png)
-![registration](assets/images/screenshots/register.png)
-![Home Page](assets/images/screenshots/home_light.png) 
-![Add Habit](assets/images/screenshots/add_habit_light.png) 
-![Add Category](assets/images/screenshots/add_category.png)
-![Habit Details](assets/images/screenshots/habit_page_light.png) 
-![Progression CHart](assets/images/screenshots/habit_chart_light.png)
-![Profile](assets/images/screenshots/profile_light.png)
-![Favourite Qutoes](assets/images/screenshots/favorite_quotes_light.png) 
-![Settings](assets/images/screenshots/settings_light.png) 
+<img src="assets/images/screenshots/splash_screen.png" width="280" alt="Splash Screen"><img src="assets/images/screenshots/login.png" width="280" alt="Login">
+<img src="assets/images/screenshots/register.png" width="280" alt="registration"><img src="assets/images/screenshots/home_light.png" width="280" alt="Home Page">
+<img src="assets/images/screenshots/add_habit_light.png" width="280" alt="Add Habit"><img src="assets/images/screenshots/add_category.png" width="280" alt="Add Category">
+<img src="assets/images/screenshots/habit_page_light.png" width="280" alt="Habit Details"><img src="assets/images/screenshots/habit_chart_light.png" width="280" alt="Progression CHart">
+<img src="assets/images/screenshots/profile_light.png" width="280" alt="Profile"><img src="assets/images/screenshots/favorite_quotes_light.png" width="280" alt="Favourite Qutoes">
+<img src="assets/images/screenshots/settings_light.png" width="280" alt="Settings">
 
-### Screenshots in Dark Mode 
-![Favorite quotes](assets/images/screenshots/favorite_quotes_dark.png) 
-![Home Page](assets/images/screenshots/home_dark.png)
-![Habit Details](assets/images/screenshots/habit_page_dark.png) 
-![Profile](assets/images/screenshots/profile_dark.png)
+### Screenshots in Dark Mode
+<img src="assets/images/screenshots/favorite_quotes_dark.png" width="280" alt="Favorite quotes"><img src="assets/images/screenshots/home_dark.png" width="280" alt="Home Page">
+<img src="assets/images/screenshots/habit_page_dark.png" width="280" alt="Habit Details"><img src="assets/images/screenshots/profile_dark.png" width="280" alt="Profile">
 
 
 ### Demo Video
@@ -129,7 +129,7 @@ Here are some screenshots from the app:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/habit-tracker-app.git
+git clone [https://github.com/your-username/habit-tracker-app.git](https://github.com/your-username/habit-tracker-app.git)
 
 # Navigate to the project folder
 cd habit-tracker-app
