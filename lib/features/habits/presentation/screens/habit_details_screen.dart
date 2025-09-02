@@ -119,7 +119,7 @@ class _HabitDetailsScreenState extends State<HabitDetailsScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 2,
-                        color: Colors.white,
+                        color: context.colors.surfaceMuted,
                         margin: const EdgeInsets.only(bottom: 24),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),

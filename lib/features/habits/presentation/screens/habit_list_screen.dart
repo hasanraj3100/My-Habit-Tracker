@@ -138,7 +138,7 @@ class _HabitListScreenState extends State<HabitListScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          "Ongoing Tasks",
+                          "Today's Habits",
                           style: TextStyle(
                             color: context.colors.textPrimary,
                             fontSize: 20,

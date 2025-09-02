@@ -141,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           }
                         } catch (e) {
                           setState(() {
-                            _feedback = "Error: ${e.toString()}";
+                            _feedback = "Invalid email or password.";
                           });
                         }
                       },
