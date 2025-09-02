@@ -86,7 +86,34 @@ class AuthProvider extends ChangeNotifier {
       'date_of_birth': dateOfBirth.toIso8601String(),
       'email': _user!.email,
     });
+
+    // Populate default categories
+    await _populateDefaultCategories(userId);
   }
+
+  Future<void> _populateDefaultCategories(String userId) async {
+    final defaultCategories = [
+      'Health',
+      'Study',
+      'Fitness',
+      'Productivity',
+      'Mental Health',
+    ];
+
+    final prefRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('settings')
+        .doc('preferences');
+
+    final docSnapshot = await prefRef.get();
+    if (!docSnapshot.exists || !(docSnapshot.data()?['categories'] is List)) {
+      await prefRef.set({
+        'categories': defaultCategories,
+      }, SetOptions(merge: true));
+    }
+  }
+
 
   // Set current user from stored userId
   Future<void> setUserById(String userId) async {

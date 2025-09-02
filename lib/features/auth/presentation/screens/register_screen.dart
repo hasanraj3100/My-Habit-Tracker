@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_habit_tracker/core/extensions%20/theme_extension.dart';
+import 'package:my_habit_tracker/features/habits/presentation/providers/habit_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/auth_provider.dart';
@@ -78,16 +79,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => isLoading = true);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final habitProvider = Provider.of<HabitProvider>(context, listen: false);
 
     try {
+      // 1️⃣ Sign up
       await authProvider.signUp(emailController.text.trim(), passwordController.text.trim());
 
+      // 2️⃣ Register profile & populate default categories
       await authProvider.registerUserProfile(
         nickname: nicknameController.text.trim(),
         gender: gender,
         timezone: timezone,
         dateOfBirth: dateOfBirth!,
       );
+
+      // 3️⃣ Load categories into HabitProvider immediately
+      await habitProvider.loadCategories();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Registration successful!")),
@@ -102,6 +109,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (mounted) setState(() => isLoading = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
